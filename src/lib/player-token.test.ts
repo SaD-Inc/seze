@@ -4,6 +4,7 @@ import {
   generateGuestName,
   readDisplayName,
   readOrCreateDisplayName,
+  resolveDisplayName,
   storeDisplayName,
 } from "~/lib/player-token";
 
@@ -42,5 +43,11 @@ describe("guest names", () => {
 
     storeDisplayName("x", storage);
     expect(readDisplayName(storage)).toBe("Keen Fox");
+  });
+
+  test("treats the suggested guest name as an empty-input fallback", () => {
+    expect(resolveDisplayName("", "Swift Owl")).toBe("Swift Owl");
+    expect(resolveDisplayName("   ", "Swift Owl")).toBe("Swift Owl");
+    expect(resolveDisplayName("  My   Name  ", "Swift Owl")).toBe("My Name");
   });
 });

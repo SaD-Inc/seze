@@ -1,6 +1,14 @@
 "use client";
 
-import { Check, Link2, Radio, RotateCcw, Users, Zap } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Link2,
+  Radio,
+  RotateCcw,
+  Users,
+  Zap,
+} from "lucide-react";
 import Link from "next/link";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -19,7 +27,7 @@ import { quickJoinUrl } from "~/lib/game-links";
 import {
   readOrCreateDisplayName,
   readPlayerToken,
-  storeDisplayName,
+  resolveDisplayName,
   storePlayerToken,
 } from "~/lib/player-token";
 import { cn } from "~/lib/utils";
@@ -41,14 +49,17 @@ export function GameRoom({
   const normalizedCode = code.toUpperCase();
   const [token, setToken] = useState<string | null>(null);
   const [tokenLoaded, setTokenLoaded] = useState(false);
+  const [suggestedName, setSuggestedName] = useState("");
   const [joinName, setJoinName] = useState("");
   const utils = api.useUtils();
 
   useEffect(() => {
     setToken(readPlayerToken(normalizedCode));
-    setJoinName(readOrCreateDisplayName());
+    setSuggestedName(readOrCreateDisplayName());
     setTokenLoaded(true);
   }, [normalizedCode]);
+
+  const resolvedJoinName = resolveDisplayName(joinName, suggestedName);
 
   const queryInput = useMemo(
     () => ({ code: normalizedCode, token: token ?? undefined }),
@@ -121,21 +132,9 @@ export function GameRoom({
 
   function submitJoin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (joinName.trim().length >= 2) {
-      join.mutate({ code: normalizedCode, displayName: joinName });
+    if (resolvedJoinName.length >= 2) {
+      join.mutate({ code: normalizedCode, displayName: resolvedJoinName });
     }
-  }
-
-  function updateJoinName(displayName: string) {
-    setJoinName(displayName);
-    storeDisplayName(displayName);
-  }
-
-  function submitQuickJoin() {
-    join.mutate({
-      code: normalizedCode,
-      displayName: joinName,
-    });
   }
 
   function makeGameMove(pieceId: string, to: { row: number; col: number }) {
@@ -148,6 +147,21 @@ export function GameRoom({
       quickJoinUrl(window.location.origin, normalizedCode),
     );
     toast.success("Quick-join link copied");
+  }
+
+  if (game.status === "waiting" && !game.viewerColor) {
+    return (
+      <JoinTableGate
+        code={game.code}
+        quickJoin={quickJoin}
+        name={joinName}
+        suggestedName={suggestedName}
+        setName={setJoinName}
+        pending={join.isPending}
+        error={join.error?.message}
+        onSubmit={submitJoin}
+      />
+    );
   }
 
   return (
@@ -177,40 +191,28 @@ export function GameRoom({
           </div>
 
           {game.status === "waiting" ? (
-            game.viewerColor ? (
-              <Card className="border-[#d9b86d]/20 bg-[#1a0c0e]/80 text-[#f2e5cd]">
-                <CardHeader>
-                  <CardTitle className="font-serif text-xl">
-                    Waiting for an opponent
-                  </CardTitle>
-                  <p className="text-sm leading-6 text-[#b9a78e]">
-                    Share this table. The game starts as soon as Burgundy joins.
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="rounded-lg border border-[#d5b46b]/20 bg-black/20 px-4 py-3 text-center font-mono text-xl tracking-[0.22em] text-[#f0ce86]">
-                    {game.code}
-                  </div>
-                  <Button
-                    onClick={copyInvite}
-                    className="w-full bg-[#9e1c38] text-white hover:bg-[#b62343]"
-                  >
-                    <Link2 className="size-4" />
-                    Copy quick-join link
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <JoinAtTable
-                quickJoin={quickJoin}
-                name={joinName}
-                setName={updateJoinName}
-                pending={join.isPending}
-                error={join.error?.message}
-                onQuickJoin={submitQuickJoin}
-                onSubmit={submitJoin}
-              />
-            )
+            <Card className="border-[#d9b86d]/20 bg-[#1a0c0e]/80 text-[#f2e5cd]">
+              <CardHeader>
+                <CardTitle className="font-serif text-xl">
+                  Waiting for an opponent
+                </CardTitle>
+                <p className="text-sm leading-6 text-[#b9a78e]">
+                  Share this table. The game starts as soon as Burgundy joins.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="rounded-lg border border-[#d5b46b]/20 bg-black/20 px-4 py-3 text-center font-mono text-xl tracking-[0.22em] text-[#f0ce86]">
+                  {game.code}
+                </div>
+                <Button
+                  onClick={copyInvite}
+                  className="w-full bg-[#9e1c38] text-white hover:bg-[#b62343]"
+                >
+                  <Link2 className="size-4" />
+                  Copy quick-join link
+                </Button>
+              </CardContent>
+            </Card>
           ) : null}
 
           {!game.viewerColor && game.status !== "waiting" ? (
@@ -253,16 +255,17 @@ function MobileGameStatus({ game }: { game: PublicGame }) {
       className="rounded-xl border border-[#d9b86d]/20 bg-[#1a0c0e]/88 px-4 py-3 text-[#f2e5cd] shadow-xl backdrop-blur"
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[0.68rem] uppercase tracking-[0.16em] text-[#9e8f79]">
-            Table {game.code} · Turn {game.state.moveNumber + 1}
-          </p>
-          <p className="mt-1 truncate font-serif text-xl">{headline}</p>
-        </div>
-        <div className="shrink-0 text-right text-xs tabular-nums text-[#baa990]">
-          <p>Ivory {ivoryPieces}/8</p>
-          <p className="mt-1">Burgundy {burgundyPieces}/8</p>
-        </div>
+        <p className="text-[0.68rem] uppercase tracking-[0.16em] text-[#9e8f79]">
+          Table {game.code} · Turn {game.state.moveNumber + 1}
+        </p>
+        {game.viewerColor ? (
+          <ViewerColorCallout color={game.viewerColor} compact />
+        ) : null}
+      </div>
+      <p className="mt-2 truncate font-serif text-xl">{headline}</p>
+      <div className="mt-3 flex justify-end gap-4 border-t border-[#d6b468]/10 pt-2 text-xs tabular-nums text-[#aa9a84]">
+        <span>Ivory {ivoryPieces}/8</span>
+        <span>Burgundy {burgundyPieces}/8</span>
       </div>
     </div>
   );
@@ -328,6 +331,9 @@ function GameStatus({ game }: { game: PublicGame }) {
         )}
       </CardHeader>
       <CardContent className="space-y-4">
+        {game.viewerColor ? (
+          <ViewerColorCallout color={game.viewerColor} />
+        ) : null}
         <PlayerRow
           color="ivory"
           name={ivory?.displayName ?? "Ivory"}
@@ -377,7 +383,11 @@ function PlayerRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="truncate font-medium">{name}</span>
-          {viewer ? <span className="text-xs text-[#9f907b]">You</span> : null}
+          {viewer ? (
+            <span className="rounded-full border border-[#d7b76e]/20 bg-[#d7b76e]/8 px-1.5 py-0.5 text-[0.62rem] uppercase tracking-[0.12em] text-[#d8bd85]">
+              You
+            </span>
+          ) : null}
         </div>
         <p className="text-xs capitalize text-[#988a77]">{color}</p>
       </div>
@@ -386,97 +396,138 @@ function PlayerRow({
   );
 }
 
-function JoinAtTable({
+function ViewerColorCallout({
+  color,
+  compact = false,
+}: {
+  color: PlayerColor;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-xl border",
+        compact ? "shrink-0 px-2.5 py-2 text-xs" : "w-full px-3 py-3 text-sm",
+        color === "ivory"
+          ? "border-[#d8bd86]/25 bg-[#eadabd]/8 text-[#ead9bb]"
+          : "border-[#d7697e]/25 bg-[#82172e]/18 text-[#f0c4cb]",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "size-3 shrink-0 rounded-full border shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_0_8px_rgba(0,0,0,0.25)]",
+          color === "ivory"
+            ? "border-[#a98b59] bg-[#eadabd]"
+            : "border-[#dc8a78]/55 bg-[#8f1c35]",
+        )}
+      />
+      <span>
+        <span className="text-[#a99a84]">You play</span>{" "}
+        <strong className="capitalize text-inherit">{color}</strong>
+      </span>
+    </div>
+  );
+}
+
+function JoinTableGate({
+  code,
   quickJoin,
   name,
+  suggestedName,
   setName,
   pending,
   error,
-  onQuickJoin,
   onSubmit,
 }: {
+  code: string;
   quickJoin: boolean;
   name: string;
+  suggestedName: string;
   setName: (name: string) => void;
   pending: boolean;
   error?: string;
-  onQuickJoin: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
-  const quickName = name.trim().length >= 2 ? name.trim() : "Guest";
+  const resolvedName = resolveDisplayName(name, suggestedName);
 
   return (
-    <Card className="border-[#d9b86d]/20 bg-[#1a0c0e]/85 text-[#f2e5cd]">
-      <CardHeader>
-        {quickJoin ? (
-          <Badge className="mb-1 w-fit border-0 bg-[#7d142c] text-[#f2d69a]">
-            <Zap className="size-3.5" /> Quick join
-          </Badge>
-        ) : null}
-        <CardTitle className="font-serif text-xl">
-          {quickJoin ? "Your seat is ready" : "Take the Burgundy seat"}
-        </CardTitle>
-        {quickJoin ? (
-          <p className="text-sm leading-6 text-[#b9a78e]">
-            Join as {quickName} with no account, or choose another name below.
-          </p>
-        ) : null}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {quickJoin ? (
-          <>
-            <Button
-              type="button"
-              onClick={onQuickJoin}
-              disabled={pending}
-              className="min-h-11 w-full bg-[#a91f3d] text-white hover:bg-[#bf294a]"
-            >
-              {pending ? (
-                <RotateCcw className="size-4 animate-spin" />
-              ) : (
-                <Zap className="size-4" />
-              )}
-              {pending ? "Joining…" : `Join as ${quickName}`}
-            </Button>
-            <div className="flex items-center gap-3" aria-hidden="true">
-              <Separator className="flex-1 bg-[#d6b468]/15" />
-              <span className="text-[0.68rem] uppercase tracking-[0.16em] text-[#887b69]">
-                or choose a name
-              </span>
-              <Separator className="flex-1 bg-[#d6b468]/15" />
-            </div>
-          </>
-        ) : null}
-        <form className="space-y-4" onSubmit={onSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="table-name">Your name</Label>
-            <Input
-              id="table-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              minLength={2}
-              maxLength={24}
-              placeholder="Player two"
-              autoComplete="nickname"
-              className="border-[#d7b76e]/20 bg-black/20"
-            />
-          </div>
-          {error ? (
-            <p role="alert" className="text-sm text-red-300">
-              {error}
-            </p>
-          ) : null}
-          <Button
-            type="submit"
-            disabled={pending || name.trim().length < 2}
-            className="w-full bg-[#9e1c38] text-white hover:bg-[#b62343]"
+    <main className="relative min-h-svh overflow-hidden px-4 text-[#f2e5cd] sm:px-6">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[42rem] bg-[radial-gradient(circle_at_50%_-10%,rgba(151,24,52,0.5),transparent_62%)]" />
+      <div className="relative mx-auto flex min-h-svh max-w-6xl flex-col">
+        <header className="flex shrink-0 items-center justify-between py-6">
+          <Brand />
+          <Badge
+            variant="outline"
+            className="border-[#d6b46c]/20 bg-black/15 text-[#bda77f]"
           >
-            {pending ? <RotateCcw className="size-4 animate-spin" /> : null}
-            {pending ? "Joining…" : "Join game"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            Table {code}
+          </Badge>
+        </header>
+        <section className="grid flex-1 place-items-center pb-16 pt-8 sm:pb-24">
+          <Card className="w-full max-w-md border-[#d9b86d]/20 bg-[#1a0c0e]/92 text-[#f2e5cd] shadow-[0_32px_90px_rgba(0,0,0,0.45)] backdrop-blur">
+            <CardHeader className="space-y-4 pb-3 text-center">
+              <Badge className="mx-auto border-0 bg-[#7d142c] text-[#f2d69a]">
+                {quickJoin ? (
+                  <Zap className="size-3.5" />
+                ) : (
+                  <Users className="size-3.5" />
+                )}
+                {quickJoin ? "Quick join" : "Open seat"}
+              </Badge>
+              <div>
+                <CardTitle className="font-serif text-3xl">
+                  Join this table
+                </CardTitle>
+                <p className="mt-2 text-sm leading-6 text-[#b9a78e]">
+                  Your opponent is waiting. Confirm your name and start playing.
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <ViewerColorCallout color="burgundy" />
+              <form className="space-y-4" onSubmit={onSubmit}>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label htmlFor="table-name">Your name</Label>
+                    <span className="text-xs text-[#887b69]">Optional</span>
+                  </div>
+                  <Input
+                    id="table-name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    minLength={2}
+                    maxLength={24}
+                    placeholder={suggestedName || "Guest name"}
+                    autoComplete="off"
+                    className="h-13 border-[#d7b76e]/20 bg-black/25 text-base placeholder:text-[#8e806c]"
+                  />
+                  <p className="text-xs text-[#887b69]">
+                    Leave blank to use the suggested name.
+                  </p>
+                </div>
+                {error ? (
+                  <p role="alert" className="text-sm text-red-300">
+                    {error}
+                  </p>
+                ) : null}
+                <Button
+                  type="submit"
+                  disabled={pending || resolvedName.length < 2}
+                  className="h-14 w-full bg-[#a91f3d] text-base text-white shadow-[0_14px_36px_rgba(139,19,45,0.3)] hover:bg-[#bf294a]"
+                >
+                  {pending ? (
+                    <RotateCcw className="size-4 animate-spin" />
+                  ) : null}
+                  {pending ? "Joining…" : `Join as ${resolvedName}`}
+                  {!pending ? <ArrowRight className="size-4" /> : null}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </section>
+      </div>
+    </main>
   );
 }
 

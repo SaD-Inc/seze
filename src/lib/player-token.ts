@@ -74,3 +74,13 @@ export function readOrCreateDisplayName(
   storeDisplayName(generatedName, storage);
   return generatedName;
 }
+
+export function resolveDisplayName(
+  override: string,
+  suggestedName: string,
+): string {
+  const normalizedOverride = override.trim().replace(/\s+/g, " ");
+  if (normalizedOverride.length > 0) return normalizedOverride;
+
+  return suggestedName.trim().replace(/\s+/g, " ");
+}

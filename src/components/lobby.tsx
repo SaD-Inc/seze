@@ -17,58 +17,50 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
   readOrCreateDisplayName,
-  storeDisplayName,
+  resolveDisplayName,
   storePlayerToken,
 } from "~/lib/player-token";
 import { api } from "~/trpc/react";
 
 export function Lobby() {
   const router = useRouter();
+  const [suggestedName, setSuggestedName] = useState("");
   const [createName, setCreateName] = useState("");
   const [joinName, setJoinName] = useState("");
   const [joinCode, setJoinCode] = useState("");
 
   useEffect(() => {
-    const displayName = readOrCreateDisplayName();
-    setCreateName(displayName);
-    setJoinName(displayName);
+    setSuggestedName(readOrCreateDisplayName());
   }, []);
 
+  const resolvedCreateName = resolveDisplayName(createName, suggestedName);
+  const resolvedJoinName = resolveDisplayName(joinName, suggestedName);
+
   const create = api.game.create.useMutation({
-    onSuccess: ({ game, token }) => {
-      storePlayerToken(game.code, token, createName.trim());
+    onSuccess: ({ game, token }, variables) => {
+      storePlayerToken(game.code, token, variables.displayName);
       router.push(`/game/${game.code}`);
     },
   });
 
   const join = api.game.join.useMutation({
-    onSuccess: ({ game, token }) => {
-      storePlayerToken(game.code, token, joinName.trim());
+    onSuccess: ({ game, token }, variables) => {
+      storePlayerToken(game.code, token, variables.displayName);
       router.push(`/game/${game.code}`);
     },
   });
 
   function submitCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (createName.trim().length >= 2) {
-      create.mutate({ displayName: createName });
+    if (resolvedCreateName.length >= 2) {
+      create.mutate({ displayName: resolvedCreateName });
     }
-  }
-
-  function updateCreateName(displayName: string) {
-    setCreateName(displayName);
-    storeDisplayName(displayName);
-  }
-
-  function updateJoinName(displayName: string) {
-    setJoinName(displayName);
-    storeDisplayName(displayName);
   }
 
   function submitJoin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (joinName.trim().length >= 2 && joinCode.trim().length >= 6) {
-      join.mutate({ displayName: joinName, code: joinCode });
+    if (resolvedJoinName.length >= 2 && joinCode.trim().length >= 6) {
+      join.mutate({ displayName: resolvedJoinName, code: joinCode });
     }
   }
 
@@ -103,15 +95,15 @@ export function Lobby() {
               <Input
                 id="create-name"
                 value={createName}
-                onChange={(event) => updateCreateName(event.target.value)}
-                placeholder="Your name"
+                onChange={(event) => setCreateName(event.target.value)}
+                placeholder={suggestedName || "Your name"}
                 minLength={2}
                 maxLength={24}
-                autoComplete="nickname"
+                autoComplete="off"
                 className="h-12 border-[#e7c987]/20 bg-black/25 text-base"
               />
               <p className="text-xs text-[#887966]">
-                We picked a random guest name. Change it if you like.
+                Leave blank to play as {suggestedName || "your guest name"}.
               </p>
             </div>
             {create.error ? (
@@ -121,7 +113,7 @@ export function Lobby() {
             ) : null}
             <Button
               type="submit"
-              disabled={create.isPending || createName.trim().length < 2}
+              disabled={create.isPending || resolvedCreateName.length < 2}
               className="h-12 w-full bg-[#a91f3d] text-[#fff3dc] hover:bg-[#bf294a]"
             >
               {create.isPending ? "Preparing table…" : "Create table"}
@@ -180,15 +172,15 @@ export function Lobby() {
               <Input
                 id="join-name"
                 value={joinName}
-                onChange={(event) => updateJoinName(event.target.value)}
-                placeholder="Your name"
+                onChange={(event) => setJoinName(event.target.value)}
+                placeholder={suggestedName || "Your name"}
                 minLength={2}
                 maxLength={24}
-                autoComplete="nickname"
+                autoComplete="off"
                 className="h-12 border-[#e7c987]/20 bg-black/25 text-base"
               />
               <p className="text-xs text-[#887966]">
-                Your guest name is ready, but you can change it.
+                Leave blank to play as {suggestedName || "your guest name"}.
               </p>
             </div>
             {join.error ? (
@@ -201,7 +193,7 @@ export function Lobby() {
               variant="outline"
               disabled={
                 join.isPending ||
-                joinName.trim().length < 2 ||
+                resolvedJoinName.length < 2 ||
                 joinCode.trim().length < 6
               }
               className="h-12 w-full border-[#d6b46c]/35 bg-[#d6b46c]/7 text-[#f1d69d] hover:bg-[#d6b46c]/15 hover:text-[#ffe6b1]"

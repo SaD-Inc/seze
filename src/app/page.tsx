@@ -1,4 +1,4 @@
-import { ArrowDown, CircleDot, Clock3, Users } from "lucide-react";
+import { ArrowDown, CircleDot, Clock3, Lightbulb, Users } from "lucide-react";
 import Link from "next/link";
 
 import { Brand } from "~/components/brand";
@@ -38,60 +38,84 @@ export default function Home() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[48rem] bg-[radial-gradient(circle_at_50%_-10%,rgba(151,24,52,0.48),transparent_58%)]" />
       <div className="pointer-events-none absolute start-[-12rem] top-72 size-[32rem] rounded-full bg-[#73152a]/10 blur-3xl" />
       <div className="relative mx-auto max-w-6xl">
-        <header className="flex items-center justify-between py-6">
-          <Brand />
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="text-[#c9b898] hover:bg-white/5 hover:text-white"
-            >
-              <Link href="/rules">How to play</Link>
-            </Button>
-            <Badge
-              variant="outline"
-              className="hidden border-[#d0ac62]/25 bg-black/10 text-[#c9b898] sm:inline-flex"
-            >
-              Live multiplayer
-            </Badge>
-          </div>
-        </header>
-
-        <section className="relative flex min-h-[38rem] flex-col items-center justify-center py-10 text-center sm:min-h-[42rem] sm:py-16">
-          <div className="home-arena" aria-hidden="true">
-            <span className="home-arena-piece home-arena-piece-ivory" />
-            <span className="home-arena-piece home-arena-piece-burgundy" />
-          </div>
-          <div className="relative z-10 flex w-full flex-col items-center">
-            <h1 className="font-serif text-6xl leading-none tracking-[0.08em] text-[#fff0d3] drop-shadow-2xl sm:text-8xl md:text-[9rem]">
-              SE<span className="text-[#c5304c]">!</span>ZE
-            </h1>
-            <div className="mt-9 w-full">
-              <Lobby />
+        <div className="flex min-h-svh flex-col">
+          <header className="flex shrink-0 items-center justify-between py-6">
+            <Brand />
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button
+                asChild
+                size="sm"
+                className="bg-[#9c1b37] text-white hover:bg-[#b62343]"
+              >
+                <Link href="/rules">
+                  <span
+                    className="relative inline-flex size-4 items-center justify-center"
+                    aria-hidden="true"
+                  >
+                    <Lightbulb className="size-4" />
+                    <span className="absolute top-px text-[9px] font-black leading-none text-[#ff647c]">
+                      !
+                    </span>
+                  </span>
+                  How to play
+                </Link>
+              </Button>
+              <Badge
+                variant="outline"
+                className="hidden h-7 gap-2 rounded-lg border-[#d0ac62]/20 bg-[#170b0d]/65 px-2.5 py-0 text-[#c9b898] shadow-[inset_0_1px_rgba(255,255,255,0.04),0_8px_24px_rgba(0,0,0,0.16)] backdrop-blur-sm sm:inline-flex"
+              >
+                <span
+                  className="relative flex size-2 items-center justify-center"
+                  aria-hidden="true"
+                >
+                  <span className="absolute inset-0 rounded-full bg-[#d9b96e]/45 motion-safe:animate-ping" />
+                  <span className="relative size-1.5 rounded-full bg-[#e5c477] shadow-[0_0_8px_rgba(229,196,119,0.7)]" />
+                </span>
+                <span className="tracking-[0.01em]">
+                  <span className="text-[#f0ddba]">Live</span>{" "}
+                  <span className="font-normal text-[#a99578]">
+                    multiplayer
+                  </span>
+                </span>
+              </Badge>
             </div>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-[#a99a85]">
-              <span className="flex items-center gap-2">
-                <Users className="size-4 text-[#d2ae63]" /> 2 players
-              </span>
-              <span className="flex items-center gap-2">
-                <Clock3 className="size-4 text-[#d2ae63]" /> 10–30 minutes
-              </span>
-              <span className="flex items-center gap-2">
-                <CircleDot className="size-4 text-[#d2ae63]" /> 3 ways to win
-              </span>
+          </header>
+
+          <section className="relative flex flex-1 flex-col items-center justify-center py-10 text-center sm:py-12">
+            <div className="home-arena" aria-hidden="true">
+              <span className="home-arena-piece home-arena-piece-ivory" />
+              <span className="home-arena-piece home-arena-piece-burgundy" />
+            </div>
+            <div className="relative z-10 flex w-full flex-col items-center">
+              <h1 className="font-serif text-6xl leading-none tracking-[0.08em] text-[#fff0d3] drop-shadow-2xl sm:text-8xl md:text-[9rem]">
+                SE<span className="text-[#c5304c]">!</span>ZE
+              </h1>
+              <div className="mt-9 w-full">
+                <Lobby />
+              </div>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-[#a99a85]">
+                <span className="flex items-center gap-2">
+                  <Users className="size-4 text-[#d2ae63]" /> 2 players
+                </span>
+                <span className="flex items-center gap-2">
+                  <Clock3 className="size-4 text-[#d2ae63]" /> 10–30 minutes
+                </span>
+                <span className="flex items-center gap-2">
+                  <CircleDot className="size-4 text-[#d2ae63]" /> 3 ways to win
+                </span>
+              </div>
             </div>
             <Button
               asChild
               variant="link"
-              className="mt-7 h-auto text-[#c8ac75] hover:text-[#f3d99e]"
+              className="absolute inset-x-0 bottom-4 z-10 mx-auto h-auto w-fit text-[#c8ac75] hover:text-[#f3d99e] sm:bottom-7"
             >
               <Link href="#what-is-seze">
-                What is SE!ZE? <ArrowDown className="size-4" />
+                What is SE!ZE? <ArrowDown className="scroll-cue-icon size-4" />
               </Link>
             </Button>
-          </div>
-        </section>
+          </section>
+        </div>
 
         <section
           className="mx-auto scroll-mt-8 border-t border-[#d7b76f]/12 pt-16 text-center"

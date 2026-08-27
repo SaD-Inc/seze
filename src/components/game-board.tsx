@@ -112,7 +112,7 @@ export function GameBoard({
         ? "Waiting for the next turn."
         : selectedPiece
           ? `${selectedPiece.kind === "captain" ? "Boss" : "Guard"} selected · choose one of ${legalMoves.length} highlighted spaces.`
-          : "Select one of your pieces to see its legal moves.";
+          : "";
 
   function handleCell(coordinate: Coordinate, piece?: GamePiece) {
     if (interactionBlocked || !viewerColor) return;

@@ -161,9 +161,31 @@
   background: radial-gradient(circle at 35% 28%, #c94455, #721326 52%, #28050e);
 }
 
+.scroll-cue-icon {
+  animation: scroll-cue 1.8s ease-in-out infinite;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+@keyframes scroll-cue {
+  0%,
+  100% {
+    opacity: 0.58;
+    transform: translate3d(0, -0.08rem, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(0, 0.28rem, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .scroll-cue-icon {
+    animation: none;
   }
 }
 
