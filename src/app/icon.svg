@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>SE!ZE icon</title>
+  <defs>
+    <radialGradient id="bg" cx="35%" cy="25%" r="80%">
+      <stop offset="0" stop-color="#b62a48"/>
+      <stop offset="0.58" stop-color="#741329"/>
+      <stop offset="1" stop-color="#2b0710"/>
+    </radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="29" fill="url(#bg)" stroke="#dbb66b" stroke-width="2"/>
+  <circle cx="32" cy="32" r="24" fill="none" stroke="#f0d08b" stroke-opacity=".35"/>
+  <text x="32" y="40" text-anchor="middle" fill="#f7e5be" font-family="Georgia,serif" font-size="24">16</text>
+</svg>

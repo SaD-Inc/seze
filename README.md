@@ -1,0 +1,58 @@
+# SE!ZE
+
+A public, guest-first web implementation of the two-player abstract strategy game SE!ZE.
+
+## Current release
+
+- Create a private two-player table without an account.
+- Join with a six-character code or shared link.
+- Play on a synchronized, server-authoritative board.
+- Reconnect to a persisted PostgreSQL game.
+- Use the provisional `prototype-0.1` ruleset with legal-move highlighting, sandwich captures, power spaces, and all three victory conditions.
+- Run as a self-contained Next.js standalone service on Railway.
+
+The rules are incomplete in public sources. Inferred behavior is isolated in the versioned rules engine and clearly labelled in the product.
+
+## Stack
+
+- Bun and TypeScript
+- Next.js App Router through create-t3-app
+- tRPC queries, mutations, and SSE subscriptions
+- Drizzle ORM and PostgreSQL
+- Tailwind CSS and shadcn/ui
+- Railway standalone deployment
+
+## Local development
+
+Requirements: Bun and a Docker-compatible runtime.
+
+```bash
+cp .env.example .env
+bun install
+bun run dev
+```
+
+`bun run dev` starts PostgreSQL, applies reviewed migrations, and starts Next.js. Stop the database with `bun run db:stop`.
+
+## Verification
+
+```bash
+bun run check
+```
+
+This formats and lints the source, validates TypeScript, runs rules-engine tests, and creates the production standalone bundle.
+
+## Deployment
+
+Railway service settings run migrations before starting the standalone server,
+check `/api/health` before promotion, and automatically deploy pushes to
+`main`. The web runtime is pinned to one EU replica because live-table events
+are process-local in this first release.
+
+After a release, verify the real production path with:
+
+```bash
+bun run verify:production -- https://your-domain.example
+```
+
+See [ROADMAP.md](./ROADMAP.md) for progress and planned work.
