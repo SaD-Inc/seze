@@ -70,7 +70,7 @@ export default function OpenGraphImage() {
             marginTop: 28,
           }}
         >
-          Control the center. Trap your opponent. Play free online.
+          16 PIECES · 2 BOSSES · 3 WAYS TO WIN
         </div>
         <div
           style={{

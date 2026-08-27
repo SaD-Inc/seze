@@ -10,6 +10,8 @@ A public, guest-first web implementation of the two-player abstract strategy gam
 
 - Create a private two-player table without an account.
 - Join with a six-character code or shared link.
+- Start from focused Create table and Join table dialogs with a generated,
+  editable guest name.
 - Share a `/join/CODE` quick-join link that offers a safe one-tap guest seat
   without allowing link-preview crawlers to consume it.
 - Serve canonical, Open Graph, robots, sitemap, and structured game metadata

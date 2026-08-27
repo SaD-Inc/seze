@@ -1,4 +1,4 @@
-import { ArrowDown, CircleDot, Clock3, Users } from "lucide-react";
+import { ArrowDown, CircleDot, Clock3, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
 
 import { Brand } from "~/components/brand";
@@ -58,45 +58,77 @@ export default function Home() {
           </div>
         </header>
 
-        <section className="flex min-h-[24rem] flex-col items-center justify-center py-8 text-center sm:min-h-[36rem] sm:py-16">
-          <p className="mb-5 text-xs font-medium uppercase tracking-[0.28em] text-[#d7b971]">
-            A game of position and pressure
-          </p>
-          <h1 className="font-serif text-6xl leading-none tracking-[0.08em] text-[#fff0d3] drop-shadow-2xl sm:text-8xl md:text-[9rem]">
-            SE<span className="text-[#c5304c]">!</span>ZE
-          </h1>
-          <p className="mt-7 max-w-xl text-balance text-lg leading-8 text-[#c7b59e] sm:text-xl">
-            Control the center. Trap your opponent. Find one of three paths to
-            victory in a fast two-player strategy game.
-          </p>
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-[#a99a85]">
-            <span className="flex items-center gap-2">
-              <Users className="size-4 text-[#d2ae63]" /> 2 players
-            </span>
-            <span className="flex items-center gap-2">
-              <Clock3 className="size-4 text-[#d2ae63]" /> 10–30 minutes
-            </span>
-            <span className="flex items-center gap-2">
-              <CircleDot className="size-4 text-[#d2ae63]" /> 3 ways to win
-            </span>
+        <section className="relative flex min-h-[38rem] flex-col items-center justify-center py-10 text-center sm:min-h-[42rem] sm:py-16">
+          <div className="home-arena" aria-hidden="true">
+            <span className="home-arena-piece home-arena-piece-ivory" />
+            <span className="home-arena-piece home-arena-piece-burgundy" />
           </div>
-          <ArrowDown className="mt-8 size-5 animate-bounce text-[#8d7658] sm:mt-14" />
+          <div className="relative z-10 flex w-full flex-col items-center">
+            <p className="mb-5 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.25em] text-[#d7b971]">
+              <Sparkles className="size-3.5" /> No account needed
+            </p>
+            <h1 className="font-serif text-6xl leading-none tracking-[0.08em] text-[#fff0d3] drop-shadow-2xl sm:text-8xl md:text-[9rem]">
+              SE<span className="text-[#c5304c]">!</span>ZE
+            </h1>
+            <div className="mt-9 w-full">
+              <Lobby />
+            </div>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-[#a99a85]">
+              <span className="flex items-center gap-2">
+                <Users className="size-4 text-[#d2ae63]" /> 2 players
+              </span>
+              <span className="flex items-center gap-2">
+                <Clock3 className="size-4 text-[#d2ae63]" /> 10–30 minutes
+              </span>
+              <span className="flex items-center gap-2">
+                <CircleDot className="size-4 text-[#d2ae63]" /> 3 ways to win
+              </span>
+            </div>
+            <Button
+              asChild
+              variant="link"
+              className="mt-7 h-auto text-[#c8ac75] hover:text-[#f3d99e]"
+            >
+              <Link href="#what-is-seze">
+                What is SE!ZE? <ArrowDown className="size-4" />
+              </Link>
+            </Button>
+          </div>
         </section>
 
-        <section className="flex justify-center scroll-mt-8" id="play">
-          <Lobby />
-        </section>
-
-        <section className="mx-auto mt-24 grid max-w-4xl gap-8 border-t border-[#d7b76f]/12 pt-12 text-center sm:grid-cols-3">
-          <Feature number="01" title="Seize the center">
-            Occupy the four central spaces and hold the heart of the board.
-          </Feature>
-          <Feature number="02" title="Take the bosses">
-            Use positioning and sandwich captures to remove both bosses.
-          </Feature>
-          <Feature number="03" title="Break the guard">
-            Reduce the opposing force to its final two pieces.
-          </Feature>
+        <section
+          className="mx-auto scroll-mt-8 border-t border-[#d7b76f]/12 pt-16 text-center"
+          id="what-is-seze"
+        >
+          <p className="text-xs font-medium uppercase tracking-[0.24em] text-[#aa8951]">
+            Simple objective · layered decisions
+          </p>
+          <h2 className="mt-4 font-serif text-4xl text-[#f4e4c8] sm:text-5xl">
+            What is SE!ZE?
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-balance leading-7 text-[#b8a892]">
+            A two-player strategy game played with sixteen pieces. Move,
+            capture, and pressure the center—then win through one of three
+            distinct paths.
+          </p>
+          <div className="mx-auto mt-12 grid max-w-4xl gap-4 text-start sm:grid-cols-3">
+            <Feature number="01" title="Seize the center">
+              Occupy the four central spaces and hold the heart of the board.
+            </Feature>
+            <Feature number="02" title="Take the bosses">
+              Use positioning and sandwich captures to remove both bosses.
+            </Feature>
+            <Feature number="03" title="Break the guard">
+              Reduce the opposing force to its final two pieces.
+            </Feature>
+          </div>
+          <Button
+            asChild
+            variant="outline"
+            className="mt-10 border-[#d6b46c]/25 bg-[#d6b46c]/5 text-[#e9cc90] hover:bg-[#d6b46c]/12 hover:text-[#ffe5ad]"
+          >
+            <Link href="/rules">See how to play</Link>
+          </Button>
         </section>
 
         <footer className="mt-24 border-t border-[#d7b76f]/10 py-8 text-center text-xs text-[#766b5d]">
@@ -118,7 +150,7 @@ function Feature({
   children: React.ReactNode;
 }) {
   return (
-    <div>
+    <div className="rounded-2xl border border-[#d7b76f]/12 bg-[#1a0d0e]/55 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.16)]">
       <span className="font-mono text-xs tracking-[0.22em] text-[#9c7d49]">
         {number}
       </span>

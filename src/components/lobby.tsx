@@ -1,14 +1,21 @@
 "use client";
 
-import { ArrowRight, Swords } from "lucide-react";
+import { ArrowRight, Plus, Swords, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
 
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { readDisplayName, storePlayerToken } from "~/lib/player-token";
+import { readOrCreateDisplayName, storePlayerToken } from "~/lib/player-token";
 import { api } from "~/trpc/react";
 
 export function Lobby() {
@@ -18,9 +25,9 @@ export function Lobby() {
   const [joinCode, setJoinCode] = useState("");
 
   useEffect(() => {
-    const saved = readDisplayName();
-    setCreateName(saved);
-    setJoinName(saved);
+    const displayName = readOrCreateDisplayName();
+    setCreateName(displayName);
+    setJoinName(displayName);
   }, []);
 
   const create = api.game.create.useMutation({
@@ -52,31 +59,46 @@ export function Lobby() {
   }
 
   return (
-    <div className="grid w-full max-w-3xl gap-4 md:grid-cols-2">
-      <Card className="border-[#e8cc91]/15 bg-[#1c0d0d]/75 text-[#f7ecd6] shadow-2xl backdrop-blur">
-        <CardHeader>
-          <div className="mb-2 grid size-10 place-items-center rounded-full bg-[#8f1630] text-[#f6deb0]">
-            <Swords className="size-5" />
-          </div>
-          <CardTitle className="font-serif text-2xl">Create a table</CardTitle>
-          <p className="text-sm leading-6 text-[#c9b8a3]">
-            Start as Ivory and invite one opponent with a private link.
-          </p>
-        </CardHeader>
-        <CardContent>
+    <div className="flex w-full max-w-lg flex-col gap-3 sm:flex-row">
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button
+            size="lg"
+            className="h-14 flex-1 bg-[#a91f3d] px-6 text-base text-[#fff3dc] shadow-[0_12px_40px_rgba(139,19,45,0.35)] hover:bg-[#bf294a]"
+          >
+            <Plus className="size-5" />
+            Create table
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="border-[#e8cc91]/20 bg-[#180b0d] p-6 text-[#f7ecd6] shadow-2xl sm:max-w-md">
+          <DialogHeader className="pe-8">
+            <div className="mb-2 grid size-11 place-items-center rounded-full bg-[#8f1630] text-[#f6deb0]">
+              <Swords className="size-5" />
+            </div>
+            <DialogTitle className="font-serif text-2xl">
+              Create a table
+            </DialogTitle>
+            <DialogDescription className="leading-6 text-[#bfae97]">
+              You’ll take Ivory. We’ll make a private table and give you a link
+              to invite your opponent.
+            </DialogDescription>
+          </DialogHeader>
           <form className="space-y-4" onSubmit={submitCreate}>
             <div className="space-y-2">
-              <Label htmlFor="create-name">Your name</Label>
+              <Label htmlFor="create-name">Playing as</Label>
               <Input
                 id="create-name"
                 value={createName}
                 onChange={(event) => setCreateName(event.target.value)}
-                placeholder="Player one"
+                placeholder="Your name"
                 minLength={2}
                 maxLength={24}
                 autoComplete="nickname"
-                className="border-[#e7c987]/20 bg-black/20"
+                className="h-12 border-[#e7c987]/20 bg-black/25 text-base"
               />
+              <p className="text-xs text-[#887966]">
+                We picked a random guest name. Change it if you like.
+              </p>
             </div>
             {create.error ? (
               <p role="alert" className="text-sm text-red-300">
@@ -86,62 +108,74 @@ export function Lobby() {
             <Button
               type="submit"
               disabled={create.isPending || createName.trim().length < 2}
-              className="w-full bg-[#a91f3d] text-[#fff3dc] hover:bg-[#bf294a]"
+              className="h-12 w-full bg-[#a91f3d] text-[#fff3dc] hover:bg-[#bf294a]"
             >
-              {create.isPending ? "Preparing table…" : "Create game"}
+              {create.isPending ? "Preparing table…" : "Create table"}
               <ArrowRight className="size-4" />
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
 
-      <Card className="border-[#e8cc91]/15 bg-[#1c0d0d]/75 text-[#f7ecd6] shadow-2xl backdrop-blur">
-        <CardHeader>
-          <div className="mb-2 grid size-10 place-items-center rounded-full border border-[#cda85f]/35 bg-[#271a13] text-[#e3c17c]">
-            <span className="font-serif text-lg">II</span>
-          </div>
-          <CardTitle className="font-serif text-2xl">Join a table</CardTitle>
-          <p className="text-sm leading-6 text-[#c9b8a3]">
-            Enter the six-character code from your opponent.
-          </p>
-        </CardHeader>
-        <CardContent>
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button
+            size="lg"
+            variant="outline"
+            className="h-14 flex-1 border-[#d6b46c]/35 bg-[#d6b46c]/7 px-6 text-base text-[#f1d69d] shadow-[0_12px_40px_rgba(0,0,0,0.18)] hover:bg-[#d6b46c]/15 hover:text-[#ffe6b1]"
+          >
+            <Users className="size-5" />
+            Join table
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="border-[#e8cc91]/20 bg-[#180b0d] p-6 text-[#f7ecd6] shadow-2xl sm:max-w-md">
+          <DialogHeader className="pe-8">
+            <div className="mb-2 grid size-11 place-items-center rounded-full border border-[#cda85f]/35 bg-[#271a13] text-[#e3c17c]">
+              <Users className="size-5" />
+            </div>
+            <DialogTitle className="font-serif text-2xl">
+              Join a table
+            </DialogTitle>
+            <DialogDescription className="leading-6 text-[#bfae97]">
+              Enter the code your opponent sent you. No account needed.
+            </DialogDescription>
+          </DialogHeader>
           <form className="space-y-4" onSubmit={submitJoin}>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_0.8fr]">
-              <div className="space-y-2">
-                <Label htmlFor="join-name">Your name</Label>
-                <Input
-                  id="join-name"
-                  value={joinName}
-                  onChange={(event) => setJoinName(event.target.value)}
-                  placeholder="Player two"
-                  minLength={2}
-                  maxLength={24}
-                  autoComplete="nickname"
-                  className="border-[#e7c987]/20 bg-black/20"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="join-code">Game code</Label>
-                <Input
-                  id="join-code"
-                  value={joinCode}
-                  onChange={(event) =>
-                    setJoinCode(
-                      event.target.value
-                        .toUpperCase()
-                        .replace(/[^A-Z0-9]/g, ""),
-                    )
-                  }
-                  placeholder="AB12CD"
-                  minLength={6}
-                  maxLength={8}
-                  autoCapitalize="characters"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  className="border-[#e7c987]/20 bg-black/20 font-mono uppercase tracking-[0.18em]"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="join-code">Table code</Label>
+              <Input
+                id="join-code"
+                value={joinCode}
+                onChange={(event) =>
+                  setJoinCode(
+                    event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""),
+                  )
+                }
+                placeholder="AB12CD"
+                minLength={6}
+                maxLength={8}
+                autoFocus
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+                className="h-14 border-[#e7c987]/20 bg-black/25 text-center font-mono text-xl uppercase tracking-[0.22em]"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="join-name">Playing as</Label>
+              <Input
+                id="join-name"
+                value={joinName}
+                onChange={(event) => setJoinName(event.target.value)}
+                placeholder="Your name"
+                minLength={2}
+                maxLength={24}
+                autoComplete="nickname"
+                className="h-12 border-[#e7c987]/20 bg-black/25 text-base"
+              />
+              <p className="text-xs text-[#887966]">
+                Your guest name is ready, but you can change it.
+              </p>
             </div>
             {join.error ? (
               <p role="alert" className="text-sm text-red-300">
@@ -156,14 +190,14 @@ export function Lobby() {
                 joinName.trim().length < 2 ||
                 joinCode.trim().length < 6
               }
-              className="w-full border-[#d6b46c]/35 bg-[#d6b46c]/5 text-[#f1d69d] hover:bg-[#d6b46c]/15 hover:text-[#ffe6b1]"
+              className="h-12 w-full border-[#d6b46c]/35 bg-[#d6b46c]/7 text-[#f1d69d] hover:bg-[#d6b46c]/15 hover:text-[#ffe6b1]"
             >
-              {join.isPending ? "Joining…" : "Join game"}
+              {join.isPending ? "Joining…" : "Join table"}
               <ArrowRight className="size-4" />
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

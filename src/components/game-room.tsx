@@ -17,7 +17,7 @@ import { Separator } from "~/components/ui/separator";
 import type { PlayerColor, PublicGame, WinReason } from "~/game/types";
 import { quickJoinUrl } from "~/lib/game-links";
 import {
-  readDisplayName,
+  readOrCreateDisplayName,
   readPlayerToken,
   storePlayerToken,
 } from "~/lib/player-token";
@@ -45,7 +45,7 @@ export function GameRoom({
 
   useEffect(() => {
     setToken(readPlayerToken(normalizedCode));
-    setJoinName(readDisplayName());
+    setJoinName(readOrCreateDisplayName());
     setTokenLoaded(true);
   }, [normalizedCode]);
 
@@ -128,7 +128,7 @@ export function GameRoom({
   function submitQuickJoin() {
     join.mutate({
       code: normalizedCode,
-      displayName: joinName.trim().length >= 2 ? joinName : "Guest",
+      displayName: joinName,
     });
   }
 
