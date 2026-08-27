@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import { GameRoom } from "~/components/game-room";
 
 export const metadata: Metadata = {
-  title: "Play | SE!ZE",
+  title: "Live table",
   description: "A live two-player game of SE!ZE.",
+  robots: { index: false, follow: false },
 };
 
 export default async function GamePage({

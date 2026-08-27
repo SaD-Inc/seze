@@ -19,7 +19,7 @@ Updated: 2026-08-27
       rules tests
 - [x] keyboard focus limited to playable pieces and legal destinations
 - [x] crawler-safe quick-join links with a one-tap guest seat
-- [ ] custom production domain
+- [x] custom production domain with canonical SEO and social sharing metadata
 
 ## Next — validate the game
 

@@ -25,9 +25,16 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "How to play | SE!ZE",
+  title: "How to play",
   description:
     "Learn the prototype SE!ZE rules with animated examples for movement, power spaces, captures, and all three ways to win.",
+  alternates: { canonical: "/rules" },
+  openGraph: {
+    title: "How to play SE!ZE",
+    description:
+      "Learn setup, movement, captures, power spaces, and all three ways to win with animated examples.",
+    url: "/rules",
+  },
 };
 
 export default function RulesPage() {

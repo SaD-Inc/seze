@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { GameRoom } from "~/components/game-room";
 
 export const metadata: Metadata = {
-  title: "Quick join | SE!ZE",
+  title: "Quick join",
   description: "Join a SE!ZE table as a guest in one tap.",
   robots: { index: false, follow: false },
 };

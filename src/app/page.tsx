@@ -5,10 +5,36 @@ import { Brand } from "~/components/brand";
 import { Lobby } from "~/components/lobby";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { siteConfig } from "~/lib/site";
+
+const videoGameSchema = {
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  name: siteConfig.name,
+  url: siteConfig.url,
+  description: siteConfig.description,
+  applicationCategory: "Game",
+  gamePlatform: "Web browser",
+  operatingSystem: "Any",
+  playMode: "MultiPlayer",
+  numberOfPlayers: {
+    "@type": "QuantitativeValue",
+    value: 2,
+  },
+  offers: {
+    "@type": "Offer",
+    price: 0,
+    priceCurrency: "USD",
+    availability: "https://schema.org/InStock",
+  },
+};
 
 export default function Home() {
   return (
     <main className="relative min-h-screen overflow-hidden px-4 pb-20 text-[#f5e8d1] sm:px-6">
+      <script type="application/ld+json">
+        {JSON.stringify(videoGameSchema)}
+      </script>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[48rem] bg-[radial-gradient(circle_at_50%_-10%,rgba(151,24,52,0.48),transparent_58%)]" />
       <div className="pointer-events-none absolute start-[-12rem] top-72 size-[32rem] rounded-full bg-[#73152a]/10 blur-3xl" />
       <div className="relative mx-auto max-w-6xl">

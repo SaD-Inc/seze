@@ -12,6 +12,8 @@ A public, guest-first web implementation of the two-player abstract strategy gam
 - Join with a six-character code or shared link.
 - Share a `/join/CODE` quick-join link that offers a safe one-tap guest seat
   without allowing link-preview crawlers to consume it.
+- Serve canonical, Open Graph, robots, sitemap, and structured game metadata
+  from [playseze.com](https://playseze.com).
 - Play on a synchronized, server-authoritative board.
 - Reconnect to a persisted PostgreSQL game.
 - Play with touch-sized controls and an always-visible turn summary on phones,
