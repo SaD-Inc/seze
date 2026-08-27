@@ -4,6 +4,8 @@ A public, guest-first web implementation of the two-player abstract strategy gam
 
 **Play:** [web-production-9aa6b.up.railway.app](https://web-production-9aa6b.up.railway.app)
 
+**Learn:** [web-production-9aa6b.up.railway.app/rules](https://web-production-9aa6b.up.railway.app/rules)
+
 ## Current release
 
 - Create a private two-player table without an account.
@@ -12,6 +14,8 @@ A public, guest-first web implementation of the two-player abstract strategy gam
 - Reconnect to a persisted PostgreSQL game.
 - Play with touch-sized controls and an always-visible turn summary on phones,
   or the full board-and-status layout on desktop.
+- Learn through a responsive visual guide with animated movement, capture, and
+  power-space examples plus a reduced-motion fallback.
 - Use the provisional `prototype-0.1` ruleset with legal-move highlighting, sandwich captures, power spaces, and all three victory conditions.
 - Run as a self-contained Next.js standalone service on Railway.
 
@@ -44,7 +48,9 @@ bun run dev
 bun run check
 ```
 
-This formats and lints the source, validates TypeScript, runs rules-engine tests, and creates the production standalone bundle.
+This formats and lints the source, validates TypeScript, runs the 16-test,
+127-assertion rules-engine matrix, and creates the production standalone
+bundle.
 
 The deployed acceptance pass also creates and completes a legal move through
 both a 390×844 mobile viewport and a 1440×900 desktop viewport.

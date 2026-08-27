@@ -14,12 +14,16 @@ Updated: 2026-08-27
 - [x] Next.js standalone packaging and Railway configuration
 - [x] two-client production multiplayer acceptance test
 - [x] interactive mobile and desktop production move verification
+- [x] animated responsive how-to-play guide with provisional-rule disclosure
+- [x] expanded setup, movement, blocker, power, capture, victory, and game-over
+      rules tests
+- [x] keyboard focus limited to playable pieces and legal destinations
 - [ ] custom production domain
 
 ## Next — validate the game
 
 - [ ] replace every inferred rule with confirmed behavior from authoritative gameplay
-- [ ] expand capture, power, victory, and draw edge-case tests
+- [ ] confirm draw, stalemate, repeated-position, and forced-pass behavior
 - [ ] add move history and rematch
 - [ ] add reconnect and abandoned-table cleanup policy
 - [ ] add basic product analytics and error monitoring
@@ -40,3 +44,5 @@ Updated: 2026-08-27
 - Guest-first; accounts are explicitly deferred
 - Game presented in isolation without creator or celebrity promotion
 - Provisional rules allowed, with visible disclosure and versioned matches
+- Visual rules examples use CSS animation with a reduced-motion fallback and
+  share opening-position data with the live rules engine

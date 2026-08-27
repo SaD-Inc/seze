@@ -1,4 +1,12 @@
-import { BookOpen, Crown, Diamond, Focus, Shield } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Crown,
+  Diamond,
+  Focus,
+  Shield,
+} from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -51,6 +59,14 @@ export function RulesDialog() {
             Occupy all four central spaces, capture both opposing captains, or
             reduce the opponent to two remaining pieces.
           </Rule>
+          <Button
+            asChild
+            className="w-full bg-[#8f1832] text-white hover:bg-[#aa2140]"
+          >
+            <Link href="/rules">
+              Open the visual guide <ArrowRight className="size-4" />
+            </Link>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

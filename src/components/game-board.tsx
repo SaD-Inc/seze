@@ -98,10 +98,24 @@ export function GameBoard({
     [state.pieces],
   );
   const displayCoordinates = isFlipped ? reversedCoordinates : coordinates;
+  const interactionBlocked =
+    disabled ||
+    Boolean(state.winner) ||
+    !viewerColor ||
+    viewerColor !== state.turn;
+
+  const guidance = state.winner
+    ? "Game complete."
+    : !viewerColor
+      ? "Watching the current position."
+      : disabled || viewerColor !== state.turn
+        ? "Waiting for the next turn."
+        : selectedPiece
+          ? `${selectedPiece.kind === "captain" ? "Captain" : "Guard"} selected · choose one of ${legalMoves.length} highlighted spaces.`
+          : "Select one of your pieces to see its legal moves.";
 
   function handleCell(coordinate: Coordinate, piece?: GamePiece) {
-    if (disabled || state.winner || !viewerColor || viewerColor !== state.turn)
-      return;
+    if (interactionBlocked || !viewerColor) return;
 
     if (piece?.color === viewerColor) {
       setSelection({
@@ -119,11 +133,6 @@ export function GameBoard({
 
   return (
     <div className="relative w-full max-w-[720px] touch-manipulation select-none">
-      <p className="sr-only" aria-live="polite">
-        {selectedPiece
-          ? `${selectedPiece.kind} selected with ${legalMoves.length} legal moves.`
-          : "Select one of your pieces to see its legal moves."}
-      </p>
       <div className="absolute -inset-3 rounded-[2rem] bg-[linear-gradient(135deg,#e3bd75_0%,#6e471f_20%,#d0a55e_48%,#563316_73%,#b7823d_100%)] shadow-[0_32px_80px_rgba(0,0,0,0.55)] sm:-inset-5" />
       <div className="absolute -inset-1 rounded-[1.6rem] border border-[#f2d693]/40 bg-[#3c150e] shadow-[inset_0_0_24px_rgba(0,0,0,0.8)] sm:-inset-2" />
       <fieldset
@@ -143,6 +152,15 @@ export function GameBoard({
           const lastTo = state.lastMove
             ? coordinatesEqual(state.lastMove.to, coordinate)
             : false;
+          const canInteract =
+            !interactionBlocked && (piece?.color === viewerColor || legal);
+          const cellDetails = [
+            `Row ${coordinate.row + 1}, column ${coordinate.col + 1}`,
+            center ? "center space" : null,
+            power ? `${power} power space` : null,
+            piece ? `${piece.color} ${piece.kind}` : "empty",
+            legal ? "legal destination" : null,
+          ].filter(Boolean);
 
           if (!playable) {
             return (
@@ -159,6 +177,7 @@ export function GameBoard({
               type="button"
               key={coordinateKey(coordinate)}
               onClick={() => handleCell(coordinate, piece)}
+              disabled={!canInteract}
               className={cn(
                 "group relative grid aspect-square touch-manipulation place-items-center border border-[#4d0714]/35 transition focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-[#ffe29b] focus-visible:ring-inset",
                 (coordinate.row + coordinate.col) % 2 === 0
@@ -170,8 +189,8 @@ export function GameBoard({
                 legal && "cursor-pointer bg-[#af3048] hover:bg-[#c33b55]",
                 selected && "z-10",
               )}
-              aria-label={`Row ${coordinate.row + 1}, column ${coordinate.col + 1}${piece ? `, ${piece.color} ${piece.kind}` : ""}`}
-              aria-pressed={selected}
+              aria-label={cellDetails.join(", ")}
+              aria-pressed={piece?.color === viewerColor ? selected : undefined}
             >
               {center ? (
                 <span className="absolute size-[62%] rotate-45 rounded-[18%] border border-[#e8c16e]/45" />
@@ -193,6 +212,13 @@ export function GameBoard({
           );
         })}
       </fieldset>
+      <p
+        role="status"
+        aria-live="polite"
+        className="relative mt-5 min-h-6 text-center text-sm text-[#b9aa93] sm:mt-7"
+      >
+        {guidance}
+      </p>
     </div>
   );
 }

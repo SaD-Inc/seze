@@ -1,8 +1,10 @@
 import { ArrowDown, CircleDot, Clock3, Users } from "lucide-react";
+import Link from "next/link";
 
 import { Brand } from "~/components/brand";
 import { Lobby } from "~/components/lobby";
 import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
 
 export default function Home() {
   return (
@@ -12,13 +14,22 @@ export default function Home() {
       <div className="relative mx-auto max-w-6xl">
         <header className="flex items-center justify-between py-6">
           <Brand />
-          <Badge
-            variant="outline"
-            className="border-[#d0ac62]/25 bg-black/10 text-[#c9b898]"
-          >
-            <span className="hidden sm:inline">Prototype rules · </span>Live
-            multiplayer
-          </Badge>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-[#c9b898] hover:bg-white/5 hover:text-white"
+            >
+              <Link href="/rules">How to play</Link>
+            </Button>
+            <Badge
+              variant="outline"
+              className="hidden border-[#d0ac62]/25 bg-black/10 text-[#c9b898] sm:inline-flex"
+            >
+              Prototype rules · Live multiplayer
+            </Badge>
+          </div>
         </header>
 
         <section className="flex min-h-[24rem] flex-col items-center justify-center py-8 text-center sm:min-h-[36rem] sm:py-16">
