@@ -4,10 +4,13 @@ updates:
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    # Bun's frozen lockfile gate is intentional. Routine Dependabot PRs update
+    # package.json without reliably refreshing bun.lock, so keep version PRs
+    # disabled and review GitHub security alerts manually.
+    open-pull-requests-limit: 0
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
