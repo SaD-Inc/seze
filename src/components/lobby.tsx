@@ -143,7 +143,7 @@ export function Lobby() {
               Join a table
             </DialogTitle>
             <DialogDescription className="leading-6 text-[#bfae97]">
-              Enter the code your opponent sent you. No account needed.
+              Enter the code your opponent sent you.
             </DialogDescription>
           </DialogHeader>
           <form className="space-y-4" onSubmit={submitJoin}>

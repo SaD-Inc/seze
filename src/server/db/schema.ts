@@ -24,6 +24,7 @@ export const games = createTable(
   (table) => [
     uniqueIndex("game_code_unique").on(table.code),
     index("game_status_updated_idx").on(table.status, table.updatedAt),
+    index("game_updated_idx").on(table.updatedAt),
   ],
 );
 

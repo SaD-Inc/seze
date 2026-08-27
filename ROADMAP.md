@@ -28,7 +28,7 @@ Updated: 2026-08-27
 - [ ] replace every inferred rule with confirmed behavior from authoritative gameplay
 - [ ] confirm draw, stalemate, repeated-position, and forced-pass behavior
 - [ ] add move history and rematch
-- [ ] add reconnect and abandoned-table cleanup policy
+- [x] add reconnect and abandoned-table cleanup policy
 - [ ] add basic product analytics and error monitoring
 - [ ] validate accessibility with keyboard and screen-reader play
 

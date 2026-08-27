@@ -58,6 +58,9 @@ bun run check
 
 This formats and lints the source, validates TypeScript, runs all game, link,
 guest-name, and retention tests, and creates the production standalone bundle.
+Pull requests and pushes to `main` repeat that gate against PostgreSQL 17,
+verify migration drift, audit production dependencies, and smoke-test the
+standalone server.
 
 The deployed acceptance pass also creates and completes a legal move through
 both a 390×844 mobile viewport and a 1440×900 desktop viewport.
@@ -73,7 +76,8 @@ because live-table events are process-local in this first release.
 
 A separate Railway cron service runs the bundled `cleanup:games` job once daily
 and deletes tables whose last activity is more than 24 hours old. Foreign-key
-cascades remove the associated players and move history in the same operation.
+cascades remove the associated players and move history in the same operation;
+the cleanup path is backed by an activity-time index.
 
 After a release, verify the real production path with:
 

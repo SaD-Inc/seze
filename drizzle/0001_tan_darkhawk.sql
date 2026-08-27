@@ -1,0 +1,1 @@
+CREATE INDEX "game_updated_idx" ON "seze_game" USING btree ("updatedAt");
