@@ -18,8 +18,12 @@ A public, guest-first web implementation of the two-player abstract strategy gam
   from [playseze.com](https://playseze.com).
 - Play on a synchronized, server-authoritative board.
 - Reconnect to a persisted PostgreSQL game.
-- Play with touch-sized controls and an always-visible turn summary on phones,
-  or the full board-and-status layout on desktop.
+- Play with touch-sized controls, player strips around the board, and a clear
+  active-turn treatment on both mobile and desktop.
+- Request or accept a rematch after the game; both players move together to a
+  new table with colors swapped.
+- Review every position on a dedicated replay screen with a move list, slider,
+  and opening/previous/next/latest controls.
 - Learn through a responsive visual guide with animated movement, capture, and
   power-space examples plus a reduced-motion fallback.
 - Use the transcript-confirmed boss terminology and three victory conditions.
@@ -27,7 +31,8 @@ A public, guest-first web implementation of the two-player abstract strategy gam
   and sandwich captures.
 - Run as a self-contained, minimal Next.js standalone image on Railway.
 
-The rules are incomplete in public sources. Inferred behavior is isolated in the versioned rules engine and clearly labelled in the product.
+The rules are incomplete in public sources. Inferred behavior is isolated in
+the versioned rules engine so it can be revised without mixing match versions.
 
 ## Stack
 

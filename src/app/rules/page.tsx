@@ -153,7 +153,6 @@ export default function RulesPage() {
               number="02"
               title="Bosses reach two"
               description="A boss moves one or two open squares in a straight orthogonal line. It cannot jump."
-              provisional
             >
               <BossMoveVisual />
             </RuleCard>
@@ -168,7 +167,6 @@ export default function RulesPage() {
               number="04"
               title="Claim a power"
               description="A guard that lands on a marked space gains one rook-like or bishop-like sliding move, spent the next time that guard moves."
-              provisional
             >
               <PowerMoveVisual />
             </RuleCard>
@@ -299,32 +297,20 @@ function RuleCard({
   number,
   title,
   description,
-  provisional = false,
   children,
 }: {
   number: string;
   title: string;
   description: string;
-  provisional?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <article className="group overflow-hidden rounded-2xl border border-[#d5b46b]/16 bg-[#180b0d]/80 shadow-xl transition hover:border-[#d5b46b]/28">
       <div className="p-4 sm:p-5">{children}</div>
       <div className="border-t border-[#d5b46b]/12 px-5 pb-6 pt-5 sm:px-7 sm:pb-7">
-        <div className="flex items-center justify-between gap-3">
-          <span className="font-mono text-xs tracking-[0.2em] text-[#9c7d49]">
-            {number}
-          </span>
-          {provisional ? (
-            <Badge
-              variant="outline"
-              className="border-[#d0ac62]/20 text-[0.65rem] text-[#b9a67f]"
-            >
-              Under verification
-            </Badge>
-          ) : null}
-        </div>
+        <span className="font-mono text-xs tracking-[0.2em] text-[#9c7d49]">
+          {number}
+        </span>
         <h3 className="mt-3 font-serif text-2xl text-[#f2dfbf]">{title}</h3>
         <p className="mt-2 text-sm leading-6 text-[#a99a86]">{description}</p>
       </div>

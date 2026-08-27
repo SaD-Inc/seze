@@ -29,7 +29,7 @@ function testState(
   return { ...createInitialState(), ...overrides, pieces };
 }
 
-describe("prototype SEZE board and setup", () => {
+describe("SEZE board and setup", () => {
   test("only removes the four corners and rejects out-of-bounds cells", () => {
     for (let row = 0; row < 8; row += 1) {
       for (let col = 0; col < 8; col += 1) {
@@ -74,7 +74,7 @@ describe("prototype SEZE board and setup", () => {
     ).toEqual(["captain", "captain", "captain", "captain"]);
   });
 
-  test("maps the four prototype power spaces", () => {
+  test("maps the four power spaces", () => {
     expect(powerAt({ row: 1, col: 1 })).toBe("bishop");
     expect(powerAt({ row: 1, col: 6 })).toBe("rook");
     expect(powerAt({ row: 6, col: 1 })).toBe("rook");
@@ -83,7 +83,7 @@ describe("prototype SEZE board and setup", () => {
   });
 });
 
-describe("prototype SEZE movement", () => {
+describe("SEZE movement", () => {
   test("guards move one open orthogonal space", () => {
     expect(getLegalMoves(createInitialState(), "i-g1")).toEqual([
       { row: 4, col: 1 },
@@ -92,7 +92,7 @@ describe("prototype SEZE movement", () => {
     ]);
   });
 
-  test("prototype bosses move one or two spaces without jumping blockers", () => {
+  test("bosses move one or two spaces without jumping blockers", () => {
     const state = testState([
       gamePiece("i-c1", "ivory", "captain", 4, 4),
       gamePiece("i-g1", "ivory", "guard", 2, 4),
@@ -196,7 +196,7 @@ describe("prototype SEZE movement", () => {
   });
 });
 
-describe("prototype SEZE capture and victory", () => {
+describe("SEZE capture and victory", () => {
   test("captures an orthogonally sandwiched enemy", () => {
     const state = testState([
       gamePiece("i-g1", "ivory", "guard", 3, 1),

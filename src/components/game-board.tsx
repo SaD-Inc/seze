@@ -24,7 +24,8 @@ type GameBoardProps = {
   state: GameState;
   viewerColor: PlayerColor | null;
   disabled?: boolean;
-  onMove: (pieceId: string, to: Coordinate) => void;
+  footerMessage?: string;
+  onMove?: (pieceId: string, to: Coordinate) => void;
 };
 
 const coordinates = Array.from(
@@ -73,6 +74,7 @@ export function GameBoard({
   state,
   viewerColor,
   disabled = false,
+  footerMessage,
   onMove,
 }: GameBoardProps) {
   const [selection, setSelection] = useState<{
@@ -99,20 +101,14 @@ export function GameBoard({
   );
   const displayCoordinates = isFlipped ? reversedCoordinates : coordinates;
   const interactionBlocked =
+    !onMove ||
     disabled ||
     Boolean(state.winner) ||
     !viewerColor ||
     viewerColor !== state.turn;
 
-  const guidance = state.winner
-    ? "Game complete."
-    : !viewerColor
-      ? "Watching the current position."
-      : disabled || viewerColor !== state.turn
-        ? "Waiting for the next turn."
-        : selectedPiece
-          ? `${selectedPiece.kind === "captain" ? "Boss" : "Guard"} selected · choose one of ${legalMoves.length} highlighted spaces.`
-          : "";
+  const guidance =
+    footerMessage ?? (selectedPiece ? `${legalMoves.length} legal moves` : "");
 
   function handleCell(coordinate: Coordinate, piece?: GamePiece) {
     if (interactionBlocked || !viewerColor) return;
@@ -126,7 +122,7 @@ export function GameBoard({
     }
 
     if (selectedPiece && legalKeys.has(coordinateKey(coordinate))) {
-      onMove(selectedPiece.id, coordinate);
+      onMove?.(selectedPiece.id, coordinate);
       setSelection({ pieceId: null, moveNumber: state.moveNumber });
     }
   }
@@ -212,13 +208,15 @@ export function GameBoard({
           );
         })}
       </fieldset>
-      <p
-        role="status"
-        aria-live="polite"
-        className="relative mt-5 min-h-6 text-center text-sm text-[#b9aa93] sm:mt-7"
-      >
-        {guidance}
-      </p>
+      {guidance ? (
+        <p
+          role="status"
+          aria-live="polite"
+          className="relative mt-5 text-center text-sm text-[#b9aa93] sm:mt-7"
+        >
+          {guidance}
+        </p>
+      ) : null}
     </div>
   );
 }

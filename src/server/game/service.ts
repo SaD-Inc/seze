@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import { applyMove, createInitialState, InvalidMoveError } from "~/game/rules";
 import type {
@@ -10,6 +10,7 @@ import type {
   GameStatus,
   PlayerColor,
   PublicGame,
+  PublicGameHistory,
 } from "~/game/types";
 import type { db as database } from "~/server/db";
 import { gameMoves, gamePlayers, games } from "~/server/db/schema";
@@ -80,6 +81,12 @@ async function publicGameFrom(
     state: game.state,
     players: players.map(({ color, displayName }) => ({ color, displayName })),
     viewerColor: viewer?.color ?? null,
+    rematch: game.rematchRequestedBy
+      ? {
+          requestedBy: game.rematchRequestedBy,
+          gameCode: game.rematchCode,
+        }
+      : null,
     createdAt: game.createdAt,
     updatedAt: game.updatedAt,
   };
@@ -91,6 +98,42 @@ export async function getPublicGame(
   token?: string,
 ): Promise<PublicGame> {
   return publicGameFrom(db, code, token);
+}
+
+export async function getGameHistory(
+  db: Database,
+  codeInput: string,
+  token?: string,
+): Promise<PublicGameHistory> {
+  const code = normalizeCode(codeInput);
+  const [gameRow] = await db
+    .select({ id: games.id })
+    .from(games)
+    .where(eq(games.code, code))
+    .limit(1);
+
+  if (!gameRow) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
+  }
+
+  const [game, moves] = await Promise.all([
+    publicGameFrom(db, code, token),
+    db
+      .select({
+        moveNumber: gameMoves.moveNumber,
+        playerColor: gameMoves.playerColor,
+        pieceId: gameMoves.pieceId,
+        from: gameMoves.from,
+        to: gameMoves.to,
+        capturedCount: gameMoves.capturedCount,
+        createdAt: gameMoves.createdAt,
+      })
+      .from(gameMoves)
+      .where(eq(gameMoves.gameId, gameRow.id))
+      .orderBy(asc(gameMoves.moveNumber)),
+  ]);
+
+  return { game, moves };
 }
 
 export async function createGame(
@@ -267,4 +310,110 @@ export async function makeMove(
 
   emitGameChanged(code);
   return result;
+}
+
+export async function requestRematch(
+  db: Database,
+  input: { code: string; token: string },
+): Promise<PublicGame> {
+  const code = normalizeCode(input.code);
+  let createdCode: string | null = null;
+
+  const result = await db.transaction(async (tx) => {
+    const [game] = await tx
+      .select()
+      .from(games)
+      .where(eq(games.code, code))
+      .for("update")
+      .limit(1);
+
+    if (!game) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
+    }
+    if (game.status !== "finished") {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "A rematch can only start after the game ends.",
+      });
+    }
+
+    const players = await tx
+      .select()
+      .from(gamePlayers)
+      .where(eq(gamePlayers.gameId, game.id));
+    const player = players.find(
+      (candidate) => candidate.tokenHash === tokenHash(input.token),
+    );
+
+    if (!player) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Player token is invalid.",
+      });
+    }
+    if (players.length !== 2) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "Both players must be present to request a rematch.",
+      });
+    }
+    if (game.rematchCode || game.rematchRequestedBy === player.color) {
+      return publicGameFrom(tx, code, input.token);
+    }
+
+    if (!game.rematchRequestedBy) {
+      await tx
+        .update(games)
+        .set({
+          rematchRequestedBy: player.color,
+          version: game.version + 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(games.id, game.id));
+
+      return publicGameFrom(tx, code, input.token);
+    }
+
+    const nextState = createInitialState();
+    createdCode = gameCode();
+    const [nextGame] = await tx
+      .insert(games)
+      .values({
+        code: createdCode,
+        status: "active",
+        rulesetVersion: nextState.rulesetVersion,
+        state: nextState,
+      })
+      .returning({ id: games.id });
+
+    if (!nextGame) throw new Error("Rematch creation did not return an id.");
+
+    await tx.insert(gamePlayers).values(
+      players.map((existingPlayer) => ({
+        gameId: nextGame.id,
+        color: otherColor(existingPlayer.color),
+        displayName: existingPlayer.displayName,
+        tokenHash: existingPlayer.tokenHash,
+      })),
+    );
+
+    await tx
+      .update(games)
+      .set({
+        rematchCode: createdCode,
+        version: game.version + 1,
+        updatedAt: new Date(),
+      })
+      .where(eq(games.id, game.id));
+
+    return publicGameFrom(tx, code, input.token);
+  });
+
+  emitGameChanged(code);
+  if (createdCode) emitGameChanged(createdCode);
+  return result;
+}
+
+function otherColor(color: PlayerColor): PlayerColor {
+  return color === "ivory" ? "burgundy" : "ivory";
 }

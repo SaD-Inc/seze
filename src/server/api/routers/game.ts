@@ -7,9 +7,11 @@ import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { gameEvents } from "~/server/game/events";
 import {
   createGame,
+  getGameHistory,
   getPublicGame,
   joinGame,
   makeMove,
+  requestRematch,
 } from "~/server/game/service";
 
 const displayName = z.string().trim().min(2).max(24);
@@ -36,6 +38,10 @@ export const gameRouter = createTRPCRouter({
     .input(z.object({ code, token: token.optional() }))
     .query(({ ctx, input }) => getPublicGame(ctx.db, input.code, input.token)),
 
+  history: publicProcedure
+    .input(z.object({ code, token: token.optional() }))
+    .query(({ ctx, input }) => getGameHistory(ctx.db, input.code, input.token)),
+
   move: publicProcedure
     .input(
       z.object({
@@ -49,6 +55,10 @@ export const gameRouter = createTRPCRouter({
       }),
     )
     .mutation(({ ctx, input }) => makeMove(ctx.db, input)),
+
+  rematch: publicProcedure
+    .input(z.object({ code, token }))
+    .mutation(({ ctx, input }) => requestRematch(ctx.db, input)),
 
   onChange: publicProcedure
     .input(z.object({ code, token: token.optional() }))

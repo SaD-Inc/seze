@@ -1,5 +1,5 @@
 export type PlayerColor = "ivory" | "burgundy";
-// `captain` is the prototype-0.1 serialized key for the player-facing boss.
+// `captain` is the legacy serialized key for the player-facing boss.
 export type PieceKind = "guard" | "captain";
 export type PowerType = "rook" | "bishop";
 export type GameStatus = "waiting" | "active" | "finished";
@@ -48,6 +48,25 @@ export type PublicGame = {
   state: GameState;
   players: PublicPlayer[];
   viewerColor: PlayerColor | null;
+  rematch: {
+    requestedBy: PlayerColor;
+    gameCode: string | null;
+  } | null;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type PublicGameMove = {
+  moveNumber: number;
+  playerColor: PlayerColor;
+  pieceId: string;
+  from: Coordinate;
+  to: Coordinate;
+  capturedCount: number;
+  createdAt: Date;
+};
+
+export type PublicGameHistory = {
+  game: PublicGame;
+  moves: PublicGameMove[];
 };

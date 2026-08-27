@@ -18,6 +18,8 @@ export const games = createTable(
     rulesetVersion: d.varchar({ length: 32 }).notNull(),
     version: d.integer().default(0).notNull(),
     state: d.jsonb().$type<GameState>().notNull(),
+    rematchRequestedBy: d.varchar({ length: 16 }).$type<PlayerColor>(),
+    rematchCode: d.varchar({ length: 8 }),
     createdAt: d.timestamp({ withTimezone: true }).defaultNow().notNull(),
     updatedAt: d.timestamp({ withTimezone: true }).defaultNow().notNull(),
   }),

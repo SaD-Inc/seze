@@ -2,14 +2,16 @@
 
 import {
   ArrowRight,
-  Check,
+  History,
   Link2,
+  Play,
   Radio,
   RotateCcw,
   Users,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -21,7 +23,6 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Separator } from "~/components/ui/separator";
 import type { PlayerColor, PublicGame, WinReason } from "~/game/types";
 import { quickJoinUrl } from "~/lib/game-links";
 import {
@@ -46,6 +47,7 @@ export function GameRoom({
   code: string;
   quickJoin?: boolean;
 }) {
+  const router = useRouter();
   const normalizedCode = code.toUpperCase();
   const [token, setToken] = useState<string | null>(null);
   const [tokenLoaded, setTokenLoaded] = useState(false);
@@ -71,19 +73,28 @@ export function GameRoom({
     refetchOnWindowFocus: true,
   });
 
-  api.game.onChange.useSubscription(
-    { code: normalizedCode },
-    {
-      enabled: tokenLoaded,
-      onData: (incoming) => {
-        utils.game.get.setData(queryInput, (current) => ({
-          ...incoming.data,
-          viewerColor: current?.viewerColor ?? null,
-        }));
-      },
-      onError: () => void gameQuery.refetch(),
+  api.game.onChange.useSubscription(queryInput, {
+    enabled: tokenLoaded,
+    onData: (incoming) => {
+      utils.game.get.setData(queryInput, incoming.data);
     },
-  );
+    onError: () => void gameQuery.refetch(),
+  });
+
+  const rematchGameCode = gameQuery.data?.rematch?.gameCode;
+  const rematchViewerColor = gameQuery.data?.viewerColor;
+  const rematchDisplayName = rematchViewerColor
+    ? gameQuery.data?.players.find(
+        (player) => player.color === rematchViewerColor,
+      )?.displayName
+    : undefined;
+
+  useEffect(() => {
+    if (!rematchViewerColor || !rematchGameCode || !token) return;
+
+    storePlayerToken(rematchGameCode, token, rematchDisplayName);
+    router.replace(`/game/${rematchGameCode}`);
+  }, [rematchDisplayName, rematchGameCode, rematchViewerColor, router, token]);
 
   const join = api.game.join.useMutation({
     onSuccess: ({ game, token: newToken }, variables) => {
@@ -99,6 +110,21 @@ export function GameRoom({
       toast.error(error.message);
       void gameQuery.refetch();
     },
+  });
+
+  const createAnother = api.game.create.useMutation({
+    onSuccess: ({ game: newGame, token: newToken }, variables) => {
+      storePlayerToken(newGame.code, newToken, variables.displayName);
+      router.push(`/game/${newGame.code}`);
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const rematch = api.game.rematch.useMutation({
+    onSuccess: (updatedGame) => {
+      utils.game.get.setData(queryInput, updatedGame);
+    },
+    onError: (error) => toast.error(error.message),
   });
 
   if (!tokenLoaded || gameQuery.isLoading) return <GameLoading />;
@@ -129,6 +155,10 @@ export function GameRoom({
   }
 
   const game = gameQuery.data;
+  const viewerName = game.viewerColor
+    ? game.players.find((player) => player.color === game.viewerColor)
+        ?.displayName
+    : undefined;
 
   function submitJoin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -147,6 +177,19 @@ export function GameRoom({
       quickJoinUrl(window.location.origin, normalizedCode),
     );
     toast.success("Quick-join link copied");
+  }
+
+  function startAnotherGame() {
+    if (!viewerName) {
+      router.push("/");
+      return;
+    }
+    createAnother.mutate({ displayName: viewerName });
+  }
+
+  function requestGameRematch() {
+    if (!token) return;
+    rematch.mutate({ code: normalizedCode, token });
   }
 
   if (game.status === "waiting" && !game.viewerColor) {
@@ -168,27 +211,58 @@ export function GameRoom({
     <main className="min-h-screen px-3 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
       <header className="mx-auto flex max-w-7xl items-center justify-between py-4 sm:py-5">
         <Brand />
-        <RulesDialog />
+        <div className="flex items-center gap-2">
+          {game.state.moveNumber > 0 ? (
+            <Button
+              asChild
+              variant="ghost"
+              className="text-[#cdb889] hover:bg-[#d6b46c]/10 hover:text-[#ffe7b3]"
+            >
+              <Link href={`/game/${game.code}/history`}>
+                <History className="size-4" />
+                <span className="hidden sm:inline">Review moves</span>
+              </Link>
+            </Button>
+          ) : null}
+          <RulesDialog />
+        </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_310px] lg:items-center lg:gap-8">
-        <div className="lg:hidden">
-          <MobileGameStatus game={game} />
-        </div>
-
-        <section className="flex min-h-0 items-start justify-center px-2 py-4 sm:px-8 sm:py-6 lg:min-h-[calc(100vh-8rem)] lg:items-center lg:py-8">
-          <GameBoard
-            state={game.state}
-            viewerColor={game.viewerColor}
-            disabled={game.status !== "active" || move.isPending}
-            onMove={makeGameMove}
-          />
+      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_290px] lg:items-center lg:gap-8">
+        <section className="flex min-h-0 items-start justify-center px-1 py-2 sm:px-8 sm:py-4 lg:min-h-[calc(100vh-6rem)] lg:items-center lg:py-6">
+          <div className="relative w-[min(100%,calc(100svh-15rem))] max-w-[720px] space-y-2.5 sm:space-y-3">
+            <BoardPlayerBar
+              game={game}
+              color={otherColor(game.viewerColor ?? "ivory")}
+            />
+            <GameBoard
+              state={game.state}
+              viewerColor={game.viewerColor}
+              disabled={game.status !== "active" || move.isPending}
+              onMove={makeGameMove}
+            />
+            <BoardPlayerBar game={game} color={game.viewerColor ?? "ivory"} />
+            {game.status === "finished" ? (
+              <div className="absolute -inset-2 z-30 grid place-items-center rounded-[2rem] bg-black/48 p-4 backdrop-blur-[2px] sm:-inset-4">
+                <FinishedGameActions
+                  game={game}
+                  viewerName={viewerName}
+                  newTablePending={createAnother.isPending}
+                  rematchPending={rematch.isPending}
+                  onNewTable={startAnotherGame}
+                  onRematch={requestGameRematch}
+                />
+              </div>
+            ) : null}
+          </div>
         </section>
 
         <aside className="space-y-4 lg:sticky lg:top-6">
-          <div className="hidden lg:block">
-            <GameStatus game={game} />
-          </div>
+          {game.status === "active" ? (
+            <div className="hidden lg:block">
+              <GameStatus game={game} />
+            </div>
+          ) : null}
 
           {game.status === "waiting" ? (
             <Card className="border-[#d9b86d]/20 bg-[#1a0c0e]/80 text-[#f2e5cd]">
@@ -226,66 +300,214 @@ export function GameRoom({
   );
 }
 
-function MobileGameStatus({ game }: { game: PublicGame }) {
-  const ivoryPieces = game.state.pieces.filter(
-    (piece) => piece.color === "ivory",
-  ).length;
-  const burgundyPieces = game.state.pieces.filter(
-    (piece) => piece.color === "burgundy",
-  ).length;
-  const turnName = game.players.find(
-    (player) => player.color === game.state.turn,
-  )?.displayName;
+function TurnColorChip({ color }: { color: PlayerColor }) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] shadow-lg",
+        color === "ivory"
+          ? "border-[#f5e7ca] bg-[#eadabd] text-[#3c2817]"
+          : "border-[#e17086]/45 bg-[#8f1c35] text-[#fff0df]",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "size-2.5 rounded-full border",
+          color === "ivory"
+            ? "border-[#9e8153] bg-[#fff7e8]"
+            : "border-[#f1a0a9]/55 bg-[#c53655]",
+        )}
+      />
+      {colorName(color)} to move
+    </div>
+  );
+}
+
+function FinishedGameActions({
+  game,
+  viewerName,
+  newTablePending,
+  rematchPending,
+  onNewTable,
+  onRematch,
+}: {
+  game: PublicGame;
+  viewerName?: string;
+  newTablePending: boolean;
+  rematchPending: boolean;
+  onNewTable: () => void;
+  onRematch: () => void;
+}) {
+  const rematchRequester = game.rematch
+    ? game.players.find((player) => player.color === game.rematch?.requestedBy)
+        ?.displayName
+    : undefined;
+  const viewerRequested = game.rematch?.requestedBy === game.viewerColor;
+  const opponentRequested = Boolean(game.rematch && !viewerRequested);
   const winnerName = game.players.find(
     (player) => player.color === game.state.winner,
   )?.displayName;
-  const isViewerTurn = game.viewerColor === game.state.turn;
-  const headline = game.state.winner
-    ? `${winnerName ?? "Winner"} wins`
-    : game.status === "waiting"
-      ? "Waiting for an opponent"
-      : isViewerTurn
-        ? "Your turn"
-        : `${turnName ?? game.state.turn} to move`;
+
+  return (
+    <Card
+      role="dialog"
+      aria-label="Game result"
+      className="w-full max-w-sm border-[#d9b86d]/35 bg-[linear-gradient(145deg,rgba(91,15,33,0.98),rgba(20,9,11,0.99))] text-[#f2e5cd] shadow-[0_28px_90px_rgba(0,0,0,0.62)]"
+    >
+      <CardHeader className="pb-4 text-center">
+        <p className="text-[0.68rem] uppercase tracking-[0.2em] text-[#d0b276]">
+          Game over
+        </p>
+        <CardTitle className="font-serif text-3xl">
+          {winnerName ?? "Winner"} wins
+        </CardTitle>
+        <p className="text-sm leading-6 text-[#baa98f]">
+          {opponentRequested
+            ? `${rematchRequester ?? "Opponent"} requested a rematch.`
+            : viewerRequested
+              ? "Waiting for your opponent."
+              : game.state.winReason
+                ? `${winCopy[game.state.winReason]}.`
+                : "Play again or review the game."}
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {viewerName ? (
+          <Button
+            type="button"
+            onClick={onRematch}
+            disabled={rematchPending || viewerRequested}
+            className="h-12 w-full bg-[#ac2341] text-white shadow-[0_12px_32px_rgba(139,19,45,0.28)] hover:bg-[#c32d4e]"
+          >
+            <RotateCcw
+              className={cn("size-4", rematchPending && "animate-spin")}
+            />
+            {rematchPending
+              ? "Updating…"
+              : viewerRequested
+                ? "Requested"
+                : opponentRequested
+                  ? "Accept rematch"
+                  : "Rematch"}
+          </Button>
+        ) : null}
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onNewTable}
+            disabled={newTablePending}
+            className="h-11 border-[#d6b46c]/25 bg-[#d6b46c]/7 text-[#ebd19b] hover:bg-[#d6b46c]/15 hover:text-[#ffe7b4]"
+          >
+            {newTablePending ? (
+              <RotateCcw className="size-4 animate-spin" />
+            ) : (
+              <Play className="size-4" />
+            )}
+            {newTablePending ? "Starting…" : "New table"}
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="h-11 border-[#d6b46c]/25 bg-[#d6b46c]/7 text-[#ebd19b] hover:bg-[#d6b46c]/15 hover:text-[#ffe7b4]"
+          >
+            <Link href={`/game/${game.code}/history`}>
+              <History className="size-4" />
+              Review
+            </Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function colorName(color: PlayerColor) {
+  return color === "ivory" ? "Ivory" : "Burgundy";
+}
+
+function otherColor(color: PlayerColor): PlayerColor {
+  return color === "ivory" ? "burgundy" : "ivory";
+}
+
+function BoardPlayerBar({
+  game,
+  color,
+}: {
+  game: PublicGame;
+  color: PlayerColor;
+}) {
+  const player = game.players.find((candidate) => candidate.color === color);
+  const pieces = game.state.pieces.filter(
+    (piece) => piece.color === color,
+  ).length;
+  const viewer = game.viewerColor === color;
+  const active = game.status === "active" && game.state.turn === color;
+  const winner = game.state.winner === color;
+  const stateLabel = winner
+    ? "Winner"
+    : active
+      ? viewer
+        ? "Your move"
+        : "To move"
+      : null;
 
   return (
     <div
-      role="status"
-      aria-live="polite"
-      className="rounded-xl border border-[#d9b86d]/20 bg-[#1a0c0e]/88 px-4 py-3 text-[#f2e5cd] shadow-xl backdrop-blur"
+      role={active ? "status" : undefined}
+      aria-live={active ? "polite" : undefined}
+      className={cn(
+        "flex min-h-12 items-center gap-3 rounded-xl border px-3 py-2 transition-colors",
+        active && color === "ivory"
+          ? "border-[#f1dfbd] bg-[#e8d7b8] text-[#3a2818] shadow-[0_8px_28px_rgba(225,199,143,0.18)]"
+          : active && color === "burgundy"
+            ? "border-[#e25b76] bg-[#8f1c35] text-[#fff0df] shadow-[0_8px_28px_rgba(142,24,52,0.28)]"
+            : winner
+              ? "border-[#d8b86f]/60 bg-[#d8b86f]/14 text-[#f2e5cd]"
+              : "border-[#d6b46c]/14 bg-[#160a0c]/72 text-[#ddccb0]",
+      )}
     >
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-[0.68rem] uppercase tracking-[0.16em] text-[#9e8f79]">
-          Table {game.code} · Turn {game.state.moveNumber + 1}
-        </p>
-        {game.viewerColor ? (
-          <ViewerColorCallout color={game.viewerColor} compact />
-        ) : null}
+      <span
+        aria-hidden="true"
+        className={cn(
+          "size-8 shrink-0 rounded-full border shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),inset_0_-3px_5px_rgba(0,0,0,0.3)]",
+          color === "ivory"
+            ? "border-[#9e8153] bg-[#f2e4c9]"
+            : "border-[#d17078]/55 bg-[#75152b]",
+          active && "ring-2 ring-current/35 ring-offset-2 ring-offset-inherit",
+        )}
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="truncate font-semibold">
+            {player?.displayName ?? "Waiting…"}
+          </span>
+          {viewer ? (
+            <span className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] opacity-65">
+              You<span className="hidden sm:inline"> · {colorName(color)}</span>
+            </span>
+          ) : null}
+        </div>
       </div>
-      <p className="mt-2 truncate font-serif text-xl">{headline}</p>
-      <div className="mt-3 flex justify-end gap-4 border-t border-[#d6b468]/10 pt-2 text-xs tabular-nums text-[#aa9a84]">
-        <span>Ivory {ivoryPieces}/8</span>
-        <span>Burgundy {burgundyPieces}/8</span>
-      </div>
+      <span className="text-xs tabular-nums opacity-65">{pieces}/8</span>
+      {stateLabel ? (
+        <span className="rounded-full bg-current px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em]">
+          <span
+            className={cn(
+              active && color === "ivory" ? "text-[#f5ead5]" : "text-[#2e1214]",
+            )}
+          >
+            {stateLabel}
+          </span>
+        </span>
+      ) : null}
     </div>
   );
 }
 
 function GameStatus({ game }: { game: PublicGame }) {
-  const ivory = game.players.find((player) => player.color === "ivory");
-  const burgundy = game.players.find((player) => player.color === "burgundy");
-  const ivoryPieces = game.state.pieces.filter(
-    (piece) => piece.color === "ivory",
-  ).length;
-  const burgundyPieces = game.state.pieces.filter(
-    (piece) => piece.color === "burgundy",
-  ).length;
-  const turnName = game.players.find(
-    (player) => player.color === game.state.turn,
-  )?.displayName;
-  const winnerName = game.players.find(
-    (player) => player.color === game.state.winner,
-  )?.displayName;
+  const isViewerTurn = game.viewerColor === game.state.turn;
 
   return (
     <Card className="border-[#d9b86d]/20 bg-[#1a0c0e]/88 text-[#f2e5cd] shadow-2xl backdrop-blur">
@@ -298,101 +520,20 @@ function GameStatus({ game }: { game: PublicGame }) {
             <Radio className="size-3 text-emerald-400" /> Live
           </span>
         </div>
-        {game.state.winner ? (
-          <div>
-            <CardTitle className="font-serif text-2xl">
-              {winnerName ?? "Winner"} wins
-            </CardTitle>
-            <p className="mt-1 text-sm text-[#bfae95]">
-              {game.state.winReason
-                ? winCopy[game.state.winReason]
-                : "Game complete"}
-              .
-            </p>
-          </div>
-        ) : game.status === "active" ? (
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-[#9e8f79]">
-              Turn {game.state.moveNumber + 1}
-            </p>
-            <CardTitle className="mt-1 font-serif text-2xl">
-              {turnName ?? game.state.turn} to move
-            </CardTitle>
-          </div>
-        ) : (
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-[#9e8f79]">
-              Table open
-            </p>
-            <CardTitle className="mt-1 font-serif text-2xl">
-              One seat remains
-            </CardTitle>
-          </div>
-        )}
+        <p className="text-xs uppercase tracking-[0.18em] text-[#9e8f79]">
+          Turn {game.state.moveNumber + 1}
+        </p>
+        <CardTitle className="font-serif text-2xl">
+          {isViewerTurn ? "Your move" : "Opponent’s move"}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <TurnColorChip color={game.state.turn} />
         {game.viewerColor ? (
           <ViewerColorCallout color={game.viewerColor} />
         ) : null}
-        <PlayerRow
-          color="ivory"
-          name={ivory?.displayName ?? "Ivory"}
-          pieces={ivoryPieces}
-          active={game.status === "active" && game.state.turn === "ivory"}
-          viewer={game.viewerColor === "ivory"}
-        />
-        <Separator className="bg-[#d6b468]/12" />
-        <PlayerRow
-          color="burgundy"
-          name={burgundy?.displayName ?? "Waiting…"}
-          pieces={burgundyPieces}
-          active={game.status === "active" && game.state.turn === "burgundy"}
-          viewer={game.viewerColor === "burgundy"}
-        />
       </CardContent>
     </Card>
-  );
-}
-
-function PlayerRow({
-  color,
-  name,
-  pieces,
-  active,
-  viewer,
-}: {
-  color: PlayerColor;
-  name: string;
-  pieces: number;
-  active: boolean;
-  viewer: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <span
-        className={cn(
-          "grid size-10 place-items-center rounded-full border shadow-[inset_0_2px_2px_rgba(255,255,255,0.3),inset_0_-3px_5px_rgba(0,0,0,0.3)]",
-          color === "ivory"
-            ? "border-[#a88958] bg-[#eadabd] text-[#725437]"
-            : "border-[#d69966]/50 bg-[#741429] text-[#edc583]",
-          active && "ring-2 ring-[#f1ca78] ring-offset-2 ring-offset-[#1a0c0e]",
-        )}
-      >
-        {active ? <Check className="size-4" /> : <Users className="size-4" />}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate font-medium">{name}</span>
-          {viewer ? (
-            <span className="rounded-full border border-[#d7b76e]/20 bg-[#d7b76e]/8 px-1.5 py-0.5 text-[0.62rem] uppercase tracking-[0.12em] text-[#d8bd85]">
-              You
-            </span>
-          ) : null}
-        </div>
-        <p className="text-xs capitalize text-[#988a77]">{color}</p>
-      </div>
-      <span className="text-sm tabular-nums text-[#cbb99d]">{pieces}/8</span>
-    </div>
   );
 }
 
@@ -406,11 +547,11 @@ function ViewerColorCallout({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-xl border",
-        compact ? "shrink-0 px-2.5 py-2 text-xs" : "w-full px-3 py-3 text-sm",
+        "flex items-center gap-2 rounded-xl border font-semibold shadow-lg",
+        compact ? "shrink-0 px-3 py-2.5 text-xs" : "w-full px-3 py-3 text-sm",
         color === "ivory"
-          ? "border-[#d8bd86]/25 bg-[#eadabd]/8 text-[#ead9bb]"
-          : "border-[#d7697e]/25 bg-[#82172e]/18 text-[#f0c4cb]",
+          ? "border-[#f5e7ca] bg-[#eadabd] text-[#3c2817]"
+          : "border-[#e17086]/45 bg-[#8f1c35] text-[#fff0df]",
       )}
     >
       <span
@@ -422,10 +563,7 @@ function ViewerColorCallout({
             : "border-[#dc8a78]/55 bg-[#8f1c35]",
         )}
       />
-      <span>
-        <span className="text-[#a99a84]">You play</span>{" "}
-        <strong className="capitalize text-inherit">{color}</strong>
-      </span>
+      <span>You are {colorName(color)}</span>
     </div>
   );
 }
