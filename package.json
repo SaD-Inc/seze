@@ -20,7 +20,7 @@
     "format": "biome check --write src scripts next.config.js drizzle.config.ts package.json tsconfig.json components.json biome.json",
     "format:check": "biome check src scripts next.config.js drizzle.config.ts package.json tsconfig.json components.json biome.json",
     "preview": "bun run build && bun run start",
-    "start": "node .next/standalone/server.js",
+    "start": "bun run db:migrate && node .next/standalone/server.js",
     "test": "bun test src/**/*.test.ts",
     "verify:production": "bun scripts/verify-production.ts",
     "typecheck": "tsc --noEmit"

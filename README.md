@@ -44,9 +44,9 @@ This formats and lints the source, validates TypeScript, runs rules-engine tests
 
 ## Deployment
 
-Railway service settings run migrations before starting the standalone server,
-check `/api/health` before promotion, and automatically deploy pushes to
-`main`. The web runtime is pinned to one EU replica because live-table events
+The production start command applies reviewed migrations before launching the
+standalone server. Railway checks `/api/health`, automatically deploys pushes
+to `main`, and pins the web runtime to one EU replica because live-table events
 are process-local in this first release.
 
 After a release, verify the real production path with:
