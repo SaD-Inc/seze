@@ -10,6 +10,8 @@ A public, guest-first web implementation of the two-player abstract strategy gam
 - Join with a six-character code or shared link.
 - Play on a synchronized, server-authoritative board.
 - Reconnect to a persisted PostgreSQL game.
+- Play with touch-sized controls and an always-visible turn summary on phones,
+  or the full board-and-status layout on desktop.
 - Use the provisional `prototype-0.1` ruleset with legal-move highlighting, sandwich captures, power spaces, and all three victory conditions.
 - Run as a self-contained Next.js standalone service on Railway.
 
@@ -43,6 +45,9 @@ bun run check
 ```
 
 This formats and lints the source, validates TypeScript, runs rules-engine tests, and creates the production standalone bundle.
+
+The deployed acceptance pass also creates and completes a legal move through
+both a 390×844 mobile viewport and a 1440×900 desktop viewport.
 
 ## Deployment
 

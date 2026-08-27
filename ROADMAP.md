@@ -13,7 +13,7 @@ Updated: 2026-08-27
 - [x] live SSE updates and reconnect recovery
 - [x] Next.js standalone packaging and Railway configuration
 - [x] two-client production multiplayer acceptance test
-- [x] responsive production browser verification
+- [x] interactive mobile and desktop production move verification
 - [ ] custom production domain
 
 ## Next — validate the game
