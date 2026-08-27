@@ -25,7 +25,7 @@ A public, guest-first web implementation of the two-player abstract strategy gam
 - Use the transcript-confirmed boss terminology and three victory conditions.
 - Use the current versioned movement and power rules with legal-move highlighting
   and sandwich captures.
-- Run as a self-contained Next.js standalone service on Railway.
+- Run as a self-contained, minimal Next.js standalone image on Railway.
 
 The rules are incomplete in public sources. Inferred behavior is isolated in the versioned rules engine and clearly labelled in the product.
 
@@ -65,10 +65,12 @@ both a 390×844 mobile viewport and a 1440×900 desktop viewport.
 
 ## Deployment
 
-The production start command applies reviewed migrations before launching the
-standalone server. The app exposes `/api/health`, Railway automatically deploys
-pushes to `main`, and the web runtime is pinned to one EU replica because
-live-table events are process-local in this first release.
+The production artifact contains a bundled migration runner and applies
+reviewed migrations before launching the standalone server. Railway builds the
+multi-stage `Dockerfile` with persistent Bun and Next.js caches, then ships only
+the standalone runtime. The app exposes `/api/health`, Railway automatically
+deploys pushes to `main`, and the web runtime is pinned to one EU replica
+because live-table events are process-local in this first release.
 
 After a release, verify the real production path with:
 
