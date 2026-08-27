@@ -107,7 +107,7 @@ export function Lobby() {
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={submitJoin}>
-            <div className="grid grid-cols-[1fr_0.8fr] gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_0.8fr]">
               <div className="space-y-2">
                 <Label htmlFor="join-name">Your name</Label>
                 <Input
@@ -137,6 +137,8 @@ export function Lobby() {
                   minLength={6}
                   maxLength={8}
                   autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck={false}
                   className="border-[#e7c987]/20 bg-black/20 font-mono uppercase tracking-[0.18em]"
                 />
               </div>

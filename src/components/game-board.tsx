@@ -118,10 +118,18 @@ export function GameBoard({
   }
 
   return (
-    <div className="relative w-full max-w-[720px]">
+    <div className="relative w-full max-w-[720px] touch-manipulation select-none">
+      <p className="sr-only" aria-live="polite">
+        {selectedPiece
+          ? `${selectedPiece.kind} selected with ${legalMoves.length} legal moves.`
+          : "Select one of your pieces to see its legal moves."}
+      </p>
       <div className="absolute -inset-3 rounded-[2rem] bg-[linear-gradient(135deg,#e3bd75_0%,#6e471f_20%,#d0a55e_48%,#563316_73%,#b7823d_100%)] shadow-[0_32px_80px_rgba(0,0,0,0.55)] sm:-inset-5" />
       <div className="absolute -inset-1 rounded-[1.6rem] border border-[#f2d693]/40 bg-[#3c150e] shadow-[inset_0_0_24px_rgba(0,0,0,0.8)] sm:-inset-2" />
-      <div className="relative grid aspect-square grid-cols-8 overflow-hidden rounded-[1.25rem] border border-[#eac779]/25 bg-[#2a070d] p-1 shadow-[inset_0_0_40px_rgba(20,0,4,0.7)] sm:p-2">
+      <fieldset
+        aria-label="SEZE game board"
+        className="relative grid min-w-0 aspect-square grid-cols-8 overflow-hidden rounded-[1.25rem] border border-[#eac779]/25 bg-[#2a070d] p-1 shadow-[inset_0_0_40px_rgba(20,0,4,0.7)] sm:p-2"
+      >
         {displayCoordinates.map((coordinate) => {
           const playable = isPlayableCell(coordinate);
           const piece = pieceByCoordinate.get(coordinateKey(coordinate));
@@ -152,7 +160,7 @@ export function GameBoard({
               key={coordinateKey(coordinate)}
               onClick={() => handleCell(coordinate, piece)}
               className={cn(
-                "group relative grid aspect-square place-items-center border border-[#4d0714]/35 transition",
+                "group relative grid aspect-square touch-manipulation place-items-center border border-[#4d0714]/35 transition focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-[#ffe29b] focus-visible:ring-inset",
                 (coordinate.row + coordinate.col) % 2 === 0
                   ? "bg-[#971c37]"
                   : "bg-[#7c132b]",
@@ -163,6 +171,7 @@ export function GameBoard({
                 selected && "z-10",
               )}
               aria-label={`Row ${coordinate.row + 1}, column ${coordinate.col + 1}${piece ? `, ${piece.color} ${piece.kind}` : ""}`}
+              aria-pressed={selected}
             >
               {center ? (
                 <span className="absolute size-[62%] rotate-45 rounded-[18%] border border-[#e8c16e]/45" />
@@ -183,7 +192,7 @@ export function GameBoard({
             </button>
           );
         })}
-      </div>
+      </fieldset>
     </div>
   );
 }

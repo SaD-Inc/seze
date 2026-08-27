@@ -129,8 +129,8 @@ export function GameRoom({ code }: { code: string }) {
   }
 
   return (
-    <main className="min-h-screen px-4 pb-8 sm:px-6 lg:px-8">
-      <header className="mx-auto flex max-w-7xl items-center justify-between py-5">
+    <main className="min-h-screen px-3 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
+      <header className="mx-auto flex max-w-7xl items-center justify-between py-4 sm:py-5">
         <Brand />
         <div className="flex items-center gap-1">
           <Badge
@@ -143,8 +143,12 @@ export function GameRoom({ code }: { code: string }) {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[minmax(0,1fr)_310px] lg:items-center">
-        <section className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-2 py-8 sm:px-8">
+      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_310px] lg:items-center lg:gap-8">
+        <div className="lg:hidden">
+          <MobileGameStatus game={game} />
+        </div>
+
+        <section className="flex min-h-0 items-start justify-center px-2 py-4 sm:px-8 sm:py-6 lg:min-h-[calc(100vh-8rem)] lg:items-center lg:py-8">
           <GameBoard
             state={game.state}
             viewerColor={game.viewerColor}
@@ -154,7 +158,9 @@ export function GameRoom({ code }: { code: string }) {
         </section>
 
         <aside className="space-y-4 lg:sticky lg:top-6">
-          <GameStatus game={game} />
+          <div className="hidden lg:block">
+            <GameStatus game={game} />
+          </div>
 
           {game.status === "waiting" ? (
             game.viewerColor ? (
@@ -199,6 +205,50 @@ export function GameRoom({ code }: { code: string }) {
         </aside>
       </div>
     </main>
+  );
+}
+
+function MobileGameStatus({ game }: { game: PublicGame }) {
+  const ivoryPieces = game.state.pieces.filter(
+    (piece) => piece.color === "ivory",
+  ).length;
+  const burgundyPieces = game.state.pieces.filter(
+    (piece) => piece.color === "burgundy",
+  ).length;
+  const turnName = game.players.find(
+    (player) => player.color === game.state.turn,
+  )?.displayName;
+  const winnerName = game.players.find(
+    (player) => player.color === game.state.winner,
+  )?.displayName;
+  const isViewerTurn = game.viewerColor === game.state.turn;
+  const headline = game.state.winner
+    ? `${winnerName ?? "Winner"} wins`
+    : game.status === "waiting"
+      ? "Waiting for an opponent"
+      : isViewerTurn
+        ? "Your turn"
+        : `${turnName ?? game.state.turn} to move`;
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="rounded-xl border border-[#d9b86d]/20 bg-[#1a0c0e]/88 px-4 py-3 text-[#f2e5cd] shadow-xl backdrop-blur"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[0.68rem] uppercase tracking-[0.16em] text-[#9e8f79]">
+            Table {game.code} · Turn {game.state.moveNumber + 1}
+          </p>
+          <p className="mt-1 truncate font-serif text-xl">{headline}</p>
+        </div>
+        <div className="shrink-0 text-right text-xs tabular-nums text-[#baa990]">
+          <p>Ivory {ivoryPieces}/8</p>
+          <p className="mt-1">Burgundy {burgundyPieces}/8</p>
+        </div>
+      </div>
+    </div>
   );
 }
 

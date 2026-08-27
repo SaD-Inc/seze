@@ -16,15 +16,16 @@ export default function Home() {
             variant="outline"
             className="border-[#d0ac62]/25 bg-black/10 text-[#c9b898]"
           >
-            Prototype rules · Live multiplayer
+            <span className="hidden sm:inline">Prototype rules · </span>Live
+            multiplayer
           </Badge>
         </header>
 
-        <section className="flex min-h-[36rem] flex-col items-center justify-center py-16 text-center">
+        <section className="flex min-h-[24rem] flex-col items-center justify-center py-8 text-center sm:min-h-[36rem] sm:py-16">
           <p className="mb-5 text-xs font-medium uppercase tracking-[0.28em] text-[#d7b971]">
             A game of position and pressure
           </p>
-          <h1 className="font-serif text-7xl leading-none tracking-[0.08em] text-[#fff0d3] drop-shadow-2xl sm:text-8xl md:text-[9rem]">
+          <h1 className="font-serif text-6xl leading-none tracking-[0.08em] text-[#fff0d3] drop-shadow-2xl sm:text-8xl md:text-[9rem]">
             SE<span className="text-[#c5304c]">!</span>ZE
           </h1>
           <p className="mt-7 max-w-xl text-balance text-lg leading-8 text-[#c7b59e] sm:text-xl">
@@ -42,7 +43,7 @@ export default function Home() {
               <CircleDot className="size-4 text-[#d2ae63]" /> 3 ways to win
             </span>
           </div>
-          <ArrowDown className="mt-14 size-5 animate-bounce text-[#8d7658]" />
+          <ArrowDown className="mt-8 size-5 animate-bounce text-[#8d7658] sm:mt-14" />
         </section>
 
         <section className="flex justify-center scroll-mt-8" id="play">
