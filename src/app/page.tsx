@@ -1,4 +1,4 @@
-import { ArrowDown, CircleDot, Clock3, Sparkles, Users } from "lucide-react";
+import { ArrowDown, CircleDot, Clock3, Users } from "lucide-react";
 import Link from "next/link";
 
 import { Brand } from "~/components/brand";
@@ -53,7 +53,7 @@ export default function Home() {
               variant="outline"
               className="hidden border-[#d0ac62]/25 bg-black/10 text-[#c9b898] sm:inline-flex"
             >
-              Prototype rules · Live multiplayer
+              Live multiplayer
             </Badge>
           </div>
         </header>
@@ -64,9 +64,6 @@ export default function Home() {
             <span className="home-arena-piece home-arena-piece-burgundy" />
           </div>
           <div className="relative z-10 flex w-full flex-col items-center">
-            <p className="mb-5 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.25em] text-[#d7b971]">
-              <Sparkles className="size-3.5" /> No account needed
-            </p>
             <h1 className="font-serif text-6xl leading-none tracking-[0.08em] text-[#fff0d3] drop-shadow-2xl sm:text-8xl md:text-[9rem]">
               SE<span className="text-[#c5304c]">!</span>ZE
             </h1>
@@ -132,8 +129,7 @@ export default function Home() {
         </section>
 
         <footer className="mt-24 border-t border-[#d7b76f]/10 py-8 text-center text-xs text-[#766b5d]">
-          SE!ZE prototype · Rules may evolve as official details become
-          available.
+          SE!ZE · Play online with friends.
         </footer>
       </div>
     </main>

@@ -105,8 +105,8 @@ export function RulesBoardOverview() {
         })}
       </div>
       <figcaption className="mt-5 text-center text-sm leading-6 text-[#a99a86]">
-        The opening position used by prototype rules v0.1. Four clipped corners,
-        four marked power spaces, and four bosses in the center.
+        The opening position. Four clipped corners, four marked power spaces,
+        and four bosses in the center.
       </figcaption>
     </figure>
   );

@@ -23,8 +23,8 @@ A public, guest-first web implementation of the two-player abstract strategy gam
 - Learn through a responsive visual guide with animated movement, capture, and
   power-space examples plus a reduced-motion fallback.
 - Use the transcript-confirmed boss terminology and three victory conditions.
-- Use the provisional `prototype-0.1` movement and power rules with legal-move
-  highlighting and sandwich captures.
+- Use the current versioned movement and power rules with legal-move highlighting
+  and sandwich captures.
 - Run as a self-contained Next.js standalone service on Railway.
 
 The rules are incomplete in public sources. Inferred behavior is isolated in the versioned rules engine and clearly labelled in the product.

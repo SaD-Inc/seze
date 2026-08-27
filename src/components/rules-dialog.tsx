@@ -37,14 +37,13 @@ export function RulesDialog() {
             How to play SE!ZE
           </DialogTitle>
           <DialogDescription className="text-[#b9aa96]">
-            Prototype rules v0.1. Publicly known mechanics are implemented;
-            unresolved details may change.
+            Movement, capture, powers, and all three paths to victory.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-5 text-sm leading-6 text-[#d5c5ae]">
           <Rule icon={Shield} title="Move">
-            Guards move one open orthogonal space. In this prototype, bosses
-            move one or two open orthogonal spaces and cannot jump pieces.
+            Guards move one open orthogonal space. Bosses move one or two open
+            orthogonal spaces and cannot jump pieces.
           </Rule>
           <Rule icon={Diamond} title="Use power spaces">
             A guard landing on a marked space gains one extended rook-like or

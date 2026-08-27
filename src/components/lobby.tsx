@@ -73,7 +73,7 @@ export function Lobby() {
   }
 
   return (
-    <div className="flex w-full max-w-lg flex-col gap-3 sm:flex-row">
+    <div className="mx-auto flex w-full max-w-lg flex-col gap-3 sm:flex-row">
       <Dialog>
         <DialogTrigger asChild>
           <Button

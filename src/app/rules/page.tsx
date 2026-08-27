@@ -27,7 +27,7 @@ import { Button } from "~/components/ui/button";
 export const metadata: Metadata = {
   title: "How to play",
   description:
-    "Learn the prototype SE!ZE rules with animated examples for movement, power spaces, captures, and all three ways to win.",
+    "Learn the SE!ZE rules with animated examples for movement, power spaces, captures, and all three ways to win.",
   alternates: { canonical: "/rules" },
   openGraph: {
     title: "How to play SE!ZE",
@@ -61,7 +61,7 @@ export default function RulesPage() {
               size="sm"
               className="bg-[#9c1b37] text-white hover:bg-[#b62343]"
             >
-              <Link href="/#play">
+              <Link href="/">
                 Play now <ArrowRight className="size-4" />
               </Link>
             </Button>
@@ -73,7 +73,7 @@ export default function RulesPage() {
             variant="outline"
             className="border-[#d0ac62]/25 bg-black/10 text-[#d7b971]"
           >
-            <BookOpenCheck className="size-3.5" /> Prototype rules v0.1
+            <BookOpenCheck className="size-3.5" /> Rules guide
           </Badge>
           <h1 className="mt-7 font-serif text-5xl leading-[0.95] text-[#fff0d3] sm:text-7xl">
             Learn the board.
@@ -122,7 +122,7 @@ export default function RulesPage() {
                 One orthogonal space
               </Legend>
               <Legend icon={<Crown />} title="Boss">
-                Prototype: up to two orthogonal spaces
+                Up to two orthogonal spaces
               </Legend>
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function RulesPage() {
             <RuleCard
               number="02"
               title="Bosses reach two"
-              description="In this prototype, a boss moves one or two open squares in a straight orthogonal line. It cannot jump."
+              description="A boss moves one or two open squares in a straight orthogonal line. It cannot jump."
               provisional
             >
               <BossMoveVisual />
@@ -223,13 +223,14 @@ export default function RulesPage() {
               </span>
               <div>
                 <h3 className="font-serif text-xl text-[#f6e7cc]">
-                  Prototype interpretation
+                  Rules note
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-[#b5a58f]">
                   Exact guard setup coordinates, boss movement distance, no-jump
                   behavior, which mark grants which power, and the one-use power
-                  lifecycle remain provisional. Every match records ruleset v0.1
-                  so later revisions stay explicit.
+                  lifecycle are still being verified against public gameplay.
+                  Every match records its rules version so revisions stay
+                  explicit.
                 </p>
               </div>
             </div>
@@ -250,15 +251,14 @@ export default function RulesPage() {
             size="lg"
             className="mt-8 min-h-12 bg-[#a31d3a] px-7 text-white hover:bg-[#bb2747]"
           >
-            <Link href="/#play">
+            <Link href="/">
               Create a game <ArrowRight className="size-4" />
             </Link>
           </Button>
         </section>
 
         <footer className="mt-16 border-t border-[#d7b76f]/10 py-8 text-center text-xs text-[#766b5d]">
-          SE!ZE prototype · Rules may evolve as stronger source material becomes
-          available.
+          SE!ZE · Learn the board, then take the center.
         </footer>
       </div>
     </main>
@@ -321,7 +321,7 @@ function RuleCard({
               variant="outline"
               className="border-[#d0ac62]/20 text-[0.65rem] text-[#b9a67f]"
             >
-              Prototype detail
+              Under verification
             </Badge>
           ) : null}
         </div>

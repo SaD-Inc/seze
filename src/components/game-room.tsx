@@ -154,15 +154,7 @@ export function GameRoom({
     <main className="min-h-screen px-3 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
       <header className="mx-auto flex max-w-7xl items-center justify-between py-4 sm:py-5">
         <Brand />
-        <div className="flex items-center gap-1">
-          <Badge
-            variant="outline"
-            className="hidden border-[#d5b46b]/25 text-[#cdbd9e] sm:inline-flex"
-          >
-            Prototype rules
-          </Badge>
-          <RulesDialog />
-        </div>
+        <RulesDialog />
       </header>
 
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_310px] lg:items-center lg:gap-8">
