@@ -6,8 +6,8 @@ import {
   Diamond,
   ExternalLink,
   Focus,
+  Plus,
   Shield,
-  Sparkles,
   Users,
 } from "lucide-react";
 import type { Metadata } from "next";
@@ -112,9 +112,9 @@ export default function RulesPage() {
                 two crowned bosses.
               </p>
               <p>
-                The four center cells are the heart of the position. The four
-                circular marks near the corners are power spaces available to
-                guards.
+                All 16 pieces fill the central 4×4: Ivory takes the upper two
+                rows and Burgundy the lower two. Eight bare power pieces sit on
+                the perimeter—four + and four ×, one of each per side.
               </p>
             </div>
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
@@ -122,7 +122,7 @@ export default function RulesPage() {
                 One orthogonal space
               </Legend>
               <Legend icon={<Crown />} title="Boss">
-                Up to two orthogonal spaces
+                Up to two spaces in any direction
               </Legend>
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function RulesPage() {
             <RuleCard
               number="02"
               title="Bosses reach two"
-              description="A boss moves one or two open squares in a straight orthogonal line. It cannot jump."
+              description="A boss moves one or two open squares orthogonally or diagonally. It cannot jump."
             >
               <BossMoveVisual />
             </RuleCard>
@@ -165,8 +165,8 @@ export default function RulesPage() {
             </RuleCard>
             <RuleCard
               number="04"
-              title="Claim a power"
-              description="A guard that lands on a marked space gains one rook-like or bishop-like sliding move, spent the next time that guard moves."
+              title="Attach a power"
+              description="A guard landing on + gains attached rook-like movement. Landing on × grants attached bishop-like movement."
             >
               <PowerMoveVisual />
             </RuleCard>
@@ -217,18 +217,18 @@ export default function RulesPage() {
           <div className="rounded-2xl border border-[#d5b46b]/18 bg-[#1a0c0e]/75 p-6 shadow-xl sm:p-8">
             <div className="flex items-start gap-4">
               <span className="grid size-10 shrink-0 place-items-center rounded-full border border-[#d7b66d]/20 bg-[#8a1730]/25 text-[#e2bd72]">
-                <Sparkles className="size-4" />
+                <Plus className="size-4" />
               </span>
               <div>
                 <h3 className="font-serif text-xl text-[#f6e7cc]">
                   Rules note
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-[#b5a58f]">
-                  Exact guard setup coordinates, boss movement distance, no-jump
-                  behavior, which mark grants which power, and the one-use power
-                  lifecycle are still being verified against public gameplay.
-                  Every match records its rules version so revisions stay
-                  explicit.
+                  The 4×4 setup and eight +/× locations follow gameplay
+                  evidence. Diagonal boss movement and persistent attached
+                  powers are the current working interpretation while a complete
+                  rulebook remains unavailable. Every match records its rules
+                  version so revisions stay explicit.
                 </p>
               </div>
             </div>

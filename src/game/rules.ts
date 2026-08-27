@@ -4,11 +4,12 @@ import type {
   GameState,
   PlayerColor,
   PowerType,
+  RulesetVersion,
   WinReason,
 } from "~/game/types";
 
 export const BOARD_SIZE = 8;
-export const RULESET_VERSION = "prototype-0.1" as const;
+export const RULESET_VERSION = "prototype-0.2" as const;
 
 export const CENTER_CELLS: readonly Coordinate[] = [
   { row: 3, col: 3 },
@@ -17,11 +18,22 @@ export const CENTER_CELLS: readonly Coordinate[] = [
   { row: 4, col: 4 },
 ];
 
-export const POWER_CELLS: ReadonlyArray<Coordinate & { power: PowerType }> = [
+const LEGACY_POWER_CELLS: ReadonlyArray<Coordinate & { power: PowerType }> = [
   { row: 1, col: 1, power: "bishop" },
   { row: 1, col: 6, power: "rook" },
   { row: 6, col: 1, power: "rook" },
   { row: 6, col: 6, power: "bishop" },
+];
+
+export const POWER_CELLS: ReadonlyArray<Coordinate & { power: PowerType }> = [
+  { row: 0, col: 2, power: "rook" },
+  { row: 0, col: 5, power: "bishop" },
+  { row: 2, col: 7, power: "rook" },
+  { row: 5, col: 7, power: "bishop" },
+  { row: 7, col: 5, power: "rook" },
+  { row: 7, col: 2, power: "bishop" },
+  { row: 5, col: 0, power: "rook" },
+  { row: 2, col: 0, power: "bishop" },
 ];
 
 const ORTHOGONAL_DIRECTIONS: readonly Coordinate[] = [
@@ -68,10 +80,15 @@ export function isPlayableCell({ row, col }: Coordinate): boolean {
   );
 }
 
-export function powerAt(coordinate: Coordinate): PowerType | null {
+export function powerAt(
+  coordinate: Coordinate,
+  rulesetVersion: RulesetVersion = RULESET_VERSION,
+): PowerType | null {
+  const powerCells =
+    rulesetVersion === "prototype-0.1" ? LEGACY_POWER_CELLS : POWER_CELLS;
+
   return (
-    POWER_CELLS.find((cell) => coordinatesEqual(cell, coordinate))?.power ??
-    null
+    powerCells.find((cell) => coordinatesEqual(cell, coordinate))?.power ?? null
   );
 }
 
@@ -89,32 +106,62 @@ function piece(
   return { id, color, kind, row, col, power: null };
 }
 
-export function createInitialState(): GameState {
+function createLegacyPieces(): GamePiece[] {
+  return [
+    piece("i-g1", "ivory", "guard", 5, 1),
+    piece("i-g2", "ivory", "guard", 5, 2),
+    piece("i-g3", "ivory", "guard", 5, 5),
+    piece("i-g4", "ivory", "guard", 5, 6),
+    piece("i-g5", "ivory", "guard", 4, 2),
+    piece("i-g6", "ivory", "guard", 4, 5),
+    piece("i-c1", "ivory", "captain", 4, 3),
+    piece("i-c2", "ivory", "captain", 4, 4),
+    piece("b-g1", "burgundy", "guard", 2, 1),
+    piece("b-g2", "burgundy", "guard", 2, 2),
+    piece("b-g3", "burgundy", "guard", 2, 5),
+    piece("b-g4", "burgundy", "guard", 2, 6),
+    piece("b-g5", "burgundy", "guard", 3, 2),
+    piece("b-g6", "burgundy", "guard", 3, 5),
+    piece("b-c1", "burgundy", "captain", 3, 3),
+    piece("b-c2", "burgundy", "captain", 3, 4),
+  ];
+}
+
+function createCurrentPieces(): GamePiece[] {
+  return [
+    piece("i-g1", "ivory", "guard", 2, 2),
+    piece("i-g2", "ivory", "guard", 2, 3),
+    piece("i-g3", "ivory", "guard", 2, 4),
+    piece("i-g4", "ivory", "guard", 2, 5),
+    piece("i-g5", "ivory", "guard", 3, 2),
+    piece("i-g6", "ivory", "guard", 3, 5),
+    piece("i-c1", "ivory", "captain", 3, 3),
+    piece("i-c2", "ivory", "captain", 3, 4),
+    piece("b-g1", "burgundy", "guard", 5, 2),
+    piece("b-g2", "burgundy", "guard", 5, 3),
+    piece("b-g3", "burgundy", "guard", 5, 4),
+    piece("b-g4", "burgundy", "guard", 5, 5),
+    piece("b-g5", "burgundy", "guard", 4, 2),
+    piece("b-g6", "burgundy", "guard", 4, 5),
+    piece("b-c1", "burgundy", "captain", 4, 3),
+    piece("b-c2", "burgundy", "captain", 4, 4),
+  ];
+}
+
+export function createInitialState(
+  rulesetVersion: RulesetVersion = RULESET_VERSION,
+): GameState {
   return {
-    rulesetVersion: RULESET_VERSION,
+    rulesetVersion,
     turn: "ivory",
     moveNumber: 0,
     winner: null,
     winReason: null,
     lastMove: null,
-    pieces: [
-      piece("i-g1", "ivory", "guard", 5, 1),
-      piece("i-g2", "ivory", "guard", 5, 2),
-      piece("i-g3", "ivory", "guard", 5, 5),
-      piece("i-g4", "ivory", "guard", 5, 6),
-      piece("i-g5", "ivory", "guard", 4, 2),
-      piece("i-g6", "ivory", "guard", 4, 5),
-      piece("i-c1", "ivory", "captain", 4, 3),
-      piece("i-c2", "ivory", "captain", 4, 4),
-      piece("b-g1", "burgundy", "guard", 2, 1),
-      piece("b-g2", "burgundy", "guard", 2, 2),
-      piece("b-g3", "burgundy", "guard", 2, 5),
-      piece("b-g4", "burgundy", "guard", 2, 6),
-      piece("b-g5", "burgundy", "guard", 3, 2),
-      piece("b-g6", "burgundy", "guard", 3, 5),
-      piece("b-c1", "burgundy", "captain", 3, 3),
-      piece("b-c2", "burgundy", "captain", 3, 4),
-    ],
+    pieces:
+      rulesetVersion === "prototype-0.1"
+        ? createLegacyPieces()
+        : createCurrentPieces(),
   };
 }
 
@@ -159,7 +206,11 @@ export function getLegalMoves(state: GameState, pieceId: string): Coordinate[] {
   if (!movingPiece || movingPiece.color !== state.turn) return [];
 
   if (movingPiece.kind === "captain") {
-    return collectSlidingMoves(state, movingPiece, ORTHOGONAL_DIRECTIONS, 2);
+    const directions =
+      state.rulesetVersion === "prototype-0.1"
+        ? ORTHOGONAL_DIRECTIONS
+        : [...ORTHOGONAL_DIRECTIONS, ...DIAGONAL_DIRECTIONS];
+    return collectSlidingMoves(state, movingPiece, directions, 2);
   }
 
   if (movingPiece.power === "rook") {
@@ -249,14 +300,17 @@ export function applyMove(
   if (!legal) throw new InvalidMoveError("That move is not legal.");
 
   const from = { row: movingPiece.row, col: movingPiece.col };
-  const spentPower = movingPiece.kind === "guard" && movingPiece.power !== null;
+  const usesLegacyPowerLifecycle =
+    state.rulesetVersion === "prototype-0.1" &&
+    movingPiece.kind === "guard" &&
+    movingPiece.power !== null;
   const movedPieces = state.pieces.map((candidate) =>
     candidate.id === pieceId
       ? {
           ...candidate,
           row: target.row,
           col: target.col,
-          power: spentPower ? null : candidate.power,
+          power: usesLegacyPowerLifecycle ? null : candidate.power,
         }
       : candidate,
   );
@@ -271,7 +325,9 @@ export function applyMove(
     (candidate) => !captureIds.includes(candidate.id),
   );
   const grantedPower =
-    movedPiece.kind === "guard" && !spentPower ? powerAt(target) : null;
+    movedPiece.kind === "guard" && !usesLegacyPowerLifecycle
+      ? powerAt(target, state.rulesetVersion)
+      : null;
   const poweredPieces = remainingPieces.map((candidate) =>
     candidate.id === pieceId && grantedPower
       ? { ...candidate, power: grantedPower }

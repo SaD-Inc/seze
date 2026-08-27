@@ -46,6 +46,7 @@ describe("SEZE board and setup", () => {
 
   test("starts each side with six guards, two bosses, and unique playable positions", () => {
     const state = createInitialState();
+    expect(state.rulesetVersion).toBe("prototype-0.2");
     expect(state.turn).toBe("ivory");
     expect(state.moveNumber).toBe(0);
     expect(state.winner).toBeNull();
@@ -72,13 +73,30 @@ describe("SEZE board and setup", () => {
           )?.kind,
       ),
     ).toEqual(["captain", "captain", "captain", "captain"]);
+
+    expect(
+      state.pieces
+        .filter((piece) => piece.color === "ivory")
+        .map(({ row, col }) => `${row}:${col}`)
+        .sort(),
+    ).toEqual(["2:2", "2:3", "2:4", "2:5", "3:2", "3:3", "3:4", "3:5"]);
+    expect(
+      state.pieces
+        .filter((piece) => piece.color === "burgundy")
+        .map(({ row, col }) => `${row}:${col}`)
+        .sort(),
+    ).toEqual(["4:2", "4:3", "4:4", "4:5", "5:2", "5:3", "5:4", "5:5"]);
   });
 
-  test("maps the four power spaces", () => {
-    expect(powerAt({ row: 1, col: 1 })).toBe("bishop");
-    expect(powerAt({ row: 1, col: 6 })).toBe("rook");
-    expect(powerAt({ row: 6, col: 1 })).toBe("rook");
-    expect(powerAt({ row: 6, col: 6 })).toBe("bishop");
+  test("maps the eight alternating plus and cross power spaces", () => {
+    expect(powerAt({ row: 0, col: 2 })).toBe("rook");
+    expect(powerAt({ row: 0, col: 5 })).toBe("bishop");
+    expect(powerAt({ row: 2, col: 7 })).toBe("rook");
+    expect(powerAt({ row: 5, col: 7 })).toBe("bishop");
+    expect(powerAt({ row: 7, col: 5 })).toBe("rook");
+    expect(powerAt({ row: 7, col: 2 })).toBe("bishop");
+    expect(powerAt({ row: 5, col: 0 })).toBe("rook");
+    expect(powerAt({ row: 2, col: 0 })).toBe("bishop");
     expect(powerAt({ row: 3, col: 3 })).toBeNull();
   });
 });
@@ -86,27 +104,27 @@ describe("SEZE board and setup", () => {
 describe("SEZE movement", () => {
   test("guards move one open orthogonal space", () => {
     expect(getLegalMoves(createInitialState(), "i-g1")).toEqual([
-      { row: 4, col: 1 },
-      { row: 6, col: 1 },
-      { row: 5, col: 0 },
+      { row: 1, col: 2 },
+      { row: 2, col: 1 },
     ]);
   });
 
-  test("bosses move one or two spaces without jumping blockers", () => {
+  test("bosses move one or two spaces orthogonally or diagonally without jumping blockers", () => {
     const state = testState([
       gamePiece("i-c1", "ivory", "captain", 4, 4),
       gamePiece("i-g1", "ivory", "guard", 2, 4),
       gamePiece("b-g1", "burgundy", "guard", 4, 2),
     ]);
 
-    expect(getLegalMoves(state, "i-c1")).toEqual([
-      { row: 3, col: 4 },
-      { row: 5, col: 4 },
-      { row: 6, col: 4 },
-      { row: 4, col: 3 },
-      { row: 4, col: 5 },
-      { row: 4, col: 6 },
-    ]);
+    const moves = getLegalMoves(state, "i-c1");
+    expect(moves).toContainEqual({ row: 3, col: 4 });
+    expect(moves).not.toContainEqual({ row: 2, col: 4 });
+    expect(moves).toContainEqual({ row: 4, col: 3 });
+    expect(moves).not.toContainEqual({ row: 4, col: 2 });
+    expect(moves).toContainEqual({ row: 3, col: 3 });
+    expect(moves).toContainEqual({ row: 2, col: 2 });
+    expect(moves).toContainEqual({ row: 5, col: 5 });
+    expect(moves).toContainEqual({ row: 6, col: 6 });
   });
 
   test("rook and bishop powers slide on their matching lines and never jump", () => {
@@ -144,52 +162,90 @@ describe("SEZE movement", () => {
     expect(() => applyMove(state, "b-g1", { row: 1, col: 1 })).toThrow(
       "It is not that player's turn.",
     );
-    expect(() => applyMove(state, "i-g1", { row: 5, col: 2 })).toThrow(
+    expect(() => applyMove(state, "i-g1", { row: 2, col: 3 })).toThrow(
       "That move is not legal.",
     );
-    expect(() => applyMove(state, "i-g1", { row: 4, col: 2 })).toThrow(
+    expect(() => applyMove(state, "i-g1", { row: 1, col: 1 })).toThrow(
       "That move is not legal.",
     );
   });
 
-  test("grants a power on landing and spends it on the guard's next move", () => {
+  test("attaches a power on landing and keeps it on the guard", () => {
     const state = testState([
-      gamePiece("i-g1", "ivory", "guard", 1, 2),
+      gamePiece("i-g1", "ivory", "guard", 0, 1),
       gamePiece("i-c1", "ivory", "captain", 7, 3),
       gamePiece("i-c2", "ivory", "captain", 7, 4),
       gamePiece("b-g1", "burgundy", "guard", 5, 5),
       gamePiece("b-c1", "burgundy", "captain", 0, 3),
       gamePiece("b-c2", "burgundy", "captain", 0, 4),
     ]);
-    const powered = applyMove(state, "i-g1", { row: 1, col: 1 });
+    const powered = applyMove(state, "i-g1", { row: 0, col: 2 });
     expect(powered.pieces.find((piece) => piece.id === "i-g1")?.power).toBe(
-      "bishop",
+      "rook",
     );
-    expect(powered.lastMove?.powerGranted).toBe("bishop");
+    expect(powered.lastMove?.powerGranted).toBe("rook");
 
+    const movedAgain = applyMove({ ...powered, turn: "ivory" }, "i-g1", {
+      row: 5,
+      col: 2,
+    });
+    expect(movedAgain.pieces.find((piece) => piece.id === "i-g1")?.power).toBe(
+      "rook",
+    );
+    expect(movedAgain.lastMove?.powerGranted).toBeNull();
+  });
+
+  test("preserves movement and one-use powers for existing prototype-0.1 games", () => {
+    const legacy = createInitialState("prototype-0.1");
+    expect(legacy.pieces.find((piece) => piece.id === "i-g1")).toMatchObject({
+      row: 5,
+      col: 1,
+    });
+    expect(powerAt({ row: 1, col: 1 }, legacy.rulesetVersion)).toBe("bishop");
+
+    const legacyBossState = testState(
+      [gamePiece("i-c1", "ivory", "captain", 4, 4)],
+      { rulesetVersion: "prototype-0.1" },
+    );
+    expect(getLegalMoves(legacyBossState, "i-c1")).not.toContainEqual({
+      row: 3,
+      col: 3,
+    });
+
+    const legacyPowerState = testState(
+      [
+        gamePiece("i-g1", "ivory", "guard", 1, 2),
+        gamePiece("i-c1", "ivory", "captain", 7, 3),
+        gamePiece("i-c2", "ivory", "captain", 7, 4),
+        gamePiece("b-g1", "burgundy", "guard", 5, 5),
+        gamePiece("b-c1", "burgundy", "captain", 0, 3),
+        gamePiece("b-c2", "burgundy", "captain", 0, 4),
+      ],
+      { rulesetVersion: "prototype-0.1" },
+    );
+    const powered = applyMove(legacyPowerState, "i-g1", { row: 1, col: 1 });
     const spent = applyMove({ ...powered, turn: "ivory" }, "i-g1", {
       row: 3,
       col: 3,
     });
     expect(spent.pieces.find((piece) => piece.id === "i-g1")?.power).toBeNull();
-    expect(spent.lastMove?.powerGranted).toBeNull();
   });
 
   test("produces a new state, move record, and opposing turn", () => {
     const state = createInitialState();
-    const next = applyMove(state, "i-g1", { row: 4, col: 1 });
+    const next = applyMove(state, "i-g1", { row: 1, col: 2 });
 
     expect(next).not.toBe(state);
     expect(state.pieces.find((piece) => piece.id === "i-g1")).toMatchObject({
-      row: 5,
-      col: 1,
+      row: 2,
+      col: 2,
     });
     expect(next.turn).toBe("burgundy");
     expect(next.moveNumber).toBe(1);
     expect(next.lastMove).toEqual({
       pieceId: "i-g1",
-      from: { row: 5, col: 1 },
-      to: { row: 4, col: 1 },
+      from: { row: 2, col: 2 },
+      to: { row: 1, col: 2 },
       capturedPieceIds: [],
       powerGranted: null,
     });

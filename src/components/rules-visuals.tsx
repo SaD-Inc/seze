@@ -1,4 +1,4 @@
-import { Crown, Diamond, Sparkles } from "lucide-react";
+import { Crown, Plus, X } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 
 import {
@@ -91,11 +91,11 @@ export function RulesBoardOverview() {
                 <span className="absolute size-[62%] rotate-45 rounded-[18%] border border-[#efd38e]/55" />
               ) : null}
               {power ? (
-                <span className="absolute grid size-[47%] place-items-center rounded-full border border-[#efd189]/65 bg-[#48101b]/45 text-[#edcb81]/85">
+                <span className="absolute grid size-[44%] place-items-center text-[#edcb81]/90 drop-shadow-[0_2px_1px_rgba(45,13,9,0.85)]">
                   {power === "rook" ? (
-                    <Sparkles className="size-[52%]" strokeWidth={1.5} />
+                    <Plus className="size-full" strokeWidth={3.5} />
                   ) : (
-                    <Diamond className="size-[48%]" strokeWidth={1.5} />
+                    <X className="size-full" strokeWidth={3.5} />
                   )}
                 </span>
               ) : null}
@@ -105,7 +105,7 @@ export function RulesBoardOverview() {
         })}
       </div>
       <figcaption className="mt-5 text-center text-sm leading-6 text-[#a99a86]">
-        The opening position. Four clipped corners, four marked power spaces,
+        The opening position. Four clipped corners, eight bare +/× power pieces,
         and four bosses in the center.
       </figcaption>
     </figure>
@@ -143,12 +143,14 @@ function DemoPiece({
   col,
   color,
   boss = false,
+  power,
   animation,
 }: {
   row: number;
   col: number;
   color: "ivory" | "burgundy";
   boss?: boolean;
+  power?: GamePiece["power"];
   animation?: string;
 }) {
   return (
@@ -164,6 +166,15 @@ function DemoPiece({
       )}
     >
       {boss ? <Crown aria-hidden="true" /> : null}
+      {power ? (
+        <span className="rule-demo-piece-power">
+          {power === "rook" ? (
+            <Plus aria-hidden="true" />
+          ) : (
+            <X aria-hidden="true" />
+          )}
+        </span>
+      ) : null}
     </span>
   );
 }
@@ -201,11 +212,11 @@ export function GuardMoveVisual() {
 
 export function BossMoveVisual() {
   return (
-    <DemoBoard label="An ivory boss moves two clear squares vertically into the highlighted space.">
-      <Target row={3} col={2} />
+    <DemoBoard label="An ivory boss moves two clear squares diagonally into the highlighted space.">
+      <Target row={3} col={3} />
       <DemoPiece
         row={1}
-        col={2}
+        col={1}
         color="ivory"
         boss
         animation="rule-demo-boss-move"
@@ -237,15 +248,16 @@ export function CaptureVisual() {
 
 export function PowerMoveVisual() {
   return (
-    <DemoBoard label="An ivory guard lands on a diamond power space, then uses its one powered move to travel diagonally.">
+    <DemoBoard label="An ivory guard lands on an × power piece, attaches it, and gains bishop-like diagonal movement.">
       <span style={position(3, 1)} className="rule-demo-power-space">
-        <Diamond aria-hidden="true" />
+        <X aria-hidden="true" />
       </span>
       <Target row={1} col={3} className="rule-demo-target-final" />
       <DemoPiece
         row={3}
         col={0}
         color="ivory"
+        power="bishop"
         animation="rule-demo-power-move"
       />
     </DemoBoard>

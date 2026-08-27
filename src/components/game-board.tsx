@@ -1,6 +1,6 @@
 "use client";
 
-import { Crown, Diamond, Sparkles } from "lucide-react";
+import { Crown, Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -58,11 +58,11 @@ function Piece({ piece, selected }: { piece: GamePiece; selected: boolean }) {
         <span className="size-[28%] rounded-full border border-current/55" />
       )}
       {piece.power ? (
-        <span className="absolute -end-1 -top-1 grid size-[30%] min-h-3 min-w-3 place-items-center rounded-full bg-[#e8bd64] text-[#4e1420] shadow">
+        <span className="absolute -end-1 -top-1 grid size-[32%] min-h-3 min-w-3 place-items-center text-[#f0c56b] drop-shadow-[0_2px_1px_rgba(45,13,9,0.9)]">
           {piece.power === "rook" ? (
-            <Sparkles className="size-[68%]" />
+            <Plus className="size-full" strokeWidth={4} />
           ) : (
-            <Diamond className="size-[64%]" />
+            <X className="size-full" strokeWidth={4} />
           )}
         </span>
       ) : null}
@@ -81,7 +81,10 @@ export function GameBoard({
     pieceId: string | null;
     moveNumber: number;
   }>({ pieceId: null, moveNumber: state.moveNumber });
-  const isFlipped = viewerColor === "burgundy";
+  const isFlipped =
+    state.rulesetVersion === "prototype-0.1"
+      ? viewerColor === "burgundy"
+      : viewerColor === "ivory";
 
   const selectedId =
     selection.moveNumber === state.moveNumber ? selection.pieceId : null;
@@ -139,7 +142,7 @@ export function GameBoard({
           const playable = isPlayableCell(coordinate);
           const piece = pieceByCoordinate.get(coordinateKey(coordinate));
           const center = isCenterCell(coordinate);
-          const power = powerAt(coordinate);
+          const power = powerAt(coordinate, state.rulesetVersion);
           const legal = legalKeys.has(coordinateKey(coordinate));
           const selected = piece?.id === selectedId;
           const lastFrom = state.lastMove
@@ -153,8 +156,16 @@ export function GameBoard({
           const cellDetails = [
             `Row ${coordinate.row + 1}, column ${coordinate.col + 1}`,
             center ? "center space" : null,
-            power ? `${power} power space` : null,
-            piece ? `${piece.color} ${piece.kind}` : "empty",
+            power
+              ? `${power === "rook" ? "plus" : "cross"} ${power} power space`
+              : null,
+            piece
+              ? `${piece.color} ${piece.kind}${
+                  piece.power
+                    ? ` with attached ${piece.power === "rook" ? "plus rook" : "cross bishop"} power`
+                    : ""
+                }`
+              : "empty",
             legal ? "legal destination" : null,
           ].filter(Boolean);
 
@@ -192,11 +203,11 @@ export function GameBoard({
                 <span className="absolute size-[62%] rotate-45 rounded-[18%] border border-[#e8c16e]/45" />
               ) : null}
               {power ? (
-                <span className="absolute grid size-[45%] place-items-center rounded-full border border-[#efd189]/60 bg-[#48101b]/38 text-[#edcb81]/75">
+                <span className="absolute grid size-[44%] place-items-center text-[#edcb81]/90 drop-shadow-[0_2px_1px_rgba(45,13,9,0.85)]">
                   {power === "rook" ? (
-                    <Sparkles className="size-[52%]" strokeWidth={1.5} />
+                    <Plus className="size-full" strokeWidth={3.5} />
                   ) : (
-                    <Diamond className="size-[48%]" strokeWidth={1.5} />
+                    <X className="size-full" strokeWidth={3.5} />
                   )}
                 </span>
               ) : null}

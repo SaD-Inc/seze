@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated: 2026-08-27
+Updated: 2026-08-28
 
 ## Now — public web MVP
 
@@ -25,6 +25,10 @@ Updated: 2026-08-27
 - [x] board-first mobile and desktop gameplay with active player emphasis
 - [x] complete request/accept rematch flow with automatic shared-table routing
 - [x] dedicated move-review screen with replay controls and position history
+- [x] evidence-corrected central 4×4 opening with Ivory above Burgundy
+- [x] eight literal `+`/`×` perimeter powers with persistent guard attachments
+- [x] one- or two-square orthogonal and diagonal boss movement
+- [x] ruleset `prototype-0.2` with legacy `prototype-0.1` replay compatibility
 
 ## Next — validate the game
 
@@ -51,3 +55,5 @@ Updated: 2026-08-27
 - Versioned matches keep future rules revisions isolated
 - Visual rules examples use CSS animation with a reduced-motion fallback and
   share opening-position data with the live rules engine
+- Crowns and pyramids stay out of the playable rules until their effects are
+  understood

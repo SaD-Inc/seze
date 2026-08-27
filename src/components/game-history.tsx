@@ -48,9 +48,13 @@ export function GameHistory({ code }: { code: string }) {
     },
   );
   const moves = historyQuery.data?.moves ?? emptyMoves;
+  const rulesetVersion = historyQuery.data?.game.state.rulesetVersion;
   const replay = useMemo(() => {
     try {
-      return { states: buildReplayStates(moves), error: null };
+      return {
+        states: buildReplayStates(moves, rulesetVersion),
+        error: null,
+      };
     } catch (error) {
       return {
         states: [],
@@ -60,7 +64,7 @@ export function GameHistory({ code }: { code: string }) {
             : "This replay is unavailable.",
       };
     }
-  }, [moves]);
+  }, [moves, rulesetVersion]);
 
   const maximumStep = moves.length;
   const step = Math.min(selectedStep ?? maximumStep, maximumStep);

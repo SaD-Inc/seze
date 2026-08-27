@@ -1,11 +1,4 @@
-import {
-  ArrowRight,
-  BookOpen,
-  Crown,
-  Diamond,
-  Focus,
-  Shield,
-} from "lucide-react";
+import { ArrowRight, BookOpen, Crown, Focus, Plus, Shield } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "~/components/ui/button";
@@ -43,11 +36,11 @@ export function RulesDialog() {
         <div className="space-y-5 text-sm leading-6 text-[#d5c5ae]">
           <Rule icon={Shield} title="Move">
             Guards move one open orthogonal space. Bosses move one or two open
-            orthogonal spaces and cannot jump pieces.
+            spaces orthogonally or diagonally and cannot jump pieces.
           </Rule>
-          <Rule icon={Diamond} title="Use power spaces">
-            A guard landing on a marked space gains one extended rook-like or
-            bishop-like move. The power is spent when used.
+          <Rule icon={Plus} title="Attach a power">
+            A guard landing on + gains rook-like movement; × grants bishop-like
+            movement. The shape remains attached to that guard.
           </Rule>
           <Rule icon={Focus} title="Capture">
             Sandwich an opposing piece orthogonally between the piece you moved

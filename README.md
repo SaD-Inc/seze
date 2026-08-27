@@ -27,12 +27,22 @@ A public, guest-first web implementation of the two-player abstract strategy gam
 - Learn through a responsive visual guide with animated movement, capture, and
   power-space examples plus a reduced-motion fallback.
 - Use the transcript-confirmed boss terminology and three victory conditions.
-- Use the current versioned movement and power rules with legal-move highlighting
-  and sandwich captures.
+- Start all 16 pieces in the central 4×4, with Ivory above Burgundy and each
+  side's bosses together in the middle of its inward-facing row.
+- Show eight bare perimeter powers—four `+` and four `×`. A guard landing on
+  `+` gains attached rook-like movement; `×` grants attached bishop-like
+  movement.
+- Let bosses move one or two clear squares orthogonally or diagonally while
+  preserving earlier matches under their original rules version.
+- Use the current versioned movement and power rules with legal-move
+  highlighting and sandwich captures.
 - Run as a self-contained, minimal Next.js standalone image on Railway.
 
-The rules are incomplete in public sources. Inferred behavior is isolated in
-the versioned rules engine so it can be revised without mixing match versions.
+The rules are incomplete in public sources. The `+`/`×` mapping, persistent
+attachment lifecycle, and diagonal boss movement remain working
+interpretations. Inferred behavior is isolated in the versioned rules engine
+so it can be revised without mixing match versions. Crowns and pyramids are
+intentionally deferred until their behavior is understood.
 
 ## Stack
 
