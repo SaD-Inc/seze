@@ -1,8 +1,4 @@
-import {
-  createTRPCClient,
-  httpBatchLink,
-  httpSubscriptionLink,
-} from "@trpc/client";
+import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import SuperJSON from "superjson";
 
 import { getLegalMoves } from "~/game/rules";
@@ -19,9 +15,6 @@ const apiUrl = `${baseUrl}/api/trpc`;
 const client = createTRPCClient<AppRouter>({
   links: [httpBatchLink({ transformer: SuperJSON, url: apiUrl })],
 });
-const subscriptionClient = createTRPCClient<AppRouter>({
-  links: [httpSubscriptionLink({ transformer: SuperJSON, url: apiUrl })],
-});
 
 const created = await client.game.create.mutate({
   displayName: "Release Ivory",
@@ -35,32 +28,25 @@ if (joined.game.status !== "active" || joined.game.players.length !== 2) {
   throw new Error("The second guest did not activate the table.");
 }
 
-let stopSubscription: (() => void) | undefined;
-const pushedUpdate = new Promise<PublicGame>((resolve, reject) => {
-  const timeout = setTimeout(() => {
-    stopSubscription?.();
-    reject(new Error("Timed out waiting for the live SSE board update."));
-  }, 10_000);
-
-  const subscription = subscriptionClient.game.onChange.subscribe(
-    { code: created.game.code, token: joined.token },
-    {
-      onData(game) {
-        if (game.data.version <= joined.game.version) return;
-        clearTimeout(timeout);
-        resolve(game.data);
-      },
-      onError(error) {
-        clearTimeout(timeout);
-        reject(error);
-      },
-    },
-  );
-
-  stopSubscription = () => subscription.unsubscribe();
+const subscriptionAbort = new AbortController();
+let markSubscriptionReady: (() => void) | undefined;
+const subscriptionReady = new Promise<void>((resolve) => {
+  markSubscriptionReady = resolve;
 });
-
-await Bun.sleep(300);
+const pushedUpdate = readLiveUpdate(
+  apiUrl,
+  created.game.code,
+  joined.token,
+  joined.game.version,
+  subscriptionAbort.signal,
+  () => markSubscriptionReady?.(),
+);
+await Promise.race([
+  subscriptionReady,
+  Bun.sleep(10_000).then(() => {
+    throw new Error("Timed out while opening the live SSE connection.");
+  }),
+]);
 
 const initial = await client.game.get.query({
   code: created.game.code,
@@ -80,7 +66,7 @@ const moved = await client.game.move.mutate({
   pieceId: piece.id,
   to: destination,
 });
-const pushed = await pushedUpdate.finally(() => stopSubscription?.());
+const pushed = await pushedUpdate.finally(() => subscriptionAbort.abort());
 const persisted = await client.game.get.query({
   code: created.game.code,
   token: joined.token,
@@ -108,3 +94,67 @@ console.log(
     2,
   ),
 );
+
+async function readLiveUpdate(
+  url: string,
+  code: string,
+  token: string,
+  initialVersion: number,
+  signal: AbortSignal,
+  onReady: () => void,
+): Promise<PublicGame> {
+  const input = encodeURIComponent(
+    JSON.stringify(SuperJSON.serialize({ code, token })),
+  );
+  const response = await fetch(`${url}/game.onChange?input=${input}`, {
+    headers: { accept: "text/event-stream" },
+    signal,
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`SSE connection failed with HTTP ${response.status}.`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const chunk = await reader.read();
+    if (chunk.done) break;
+    buffer += decoder
+      .decode(chunk.value, { stream: true })
+      .replace(/\r\n/g, "\n");
+
+    let boundary = buffer.indexOf("\n\n");
+    while (boundary >= 0) {
+      const event = buffer.slice(0, boundary);
+      buffer = buffer.slice(boundary + 2);
+      boundary = buffer.indexOf("\n\n");
+
+      const data = event
+        .split("\n")
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).trimStart())
+        .join("\n");
+      if (!data) continue;
+
+      const decoded: unknown = SuperJSON.deserialize(JSON.parse(data));
+      if (!isPublicGame(decoded)) continue;
+      onReady();
+      if (decoded.version > initialVersion) return decoded;
+    }
+  }
+
+  throw new Error("The live SSE connection closed before the move arrived.");
+}
+
+function isPublicGame(value: unknown): value is PublicGame {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "version" in value &&
+    typeof value.version === "number" &&
+    "state" in value
+  );
+}

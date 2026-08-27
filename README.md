@@ -2,6 +2,8 @@
 
 A public, guest-first web implementation of the two-player abstract strategy game SE!ZE.
 
+**Play:** [web-production-9aa6b.up.railway.app](https://web-production-9aa6b.up.railway.app)
+
 ## Current release
 
 - Create a private two-player table without an account.
@@ -45,14 +47,14 @@ This formats and lints the source, validates TypeScript, runs rules-engine tests
 ## Deployment
 
 The production start command applies reviewed migrations before launching the
-standalone server. Railway checks `/api/health`, automatically deploys pushes
-to `main`, and pins the web runtime to one EU replica because live-table events
-are process-local in this first release.
+standalone server. The app exposes `/api/health`, Railway automatically deploys
+pushes to `main`, and the web runtime is pinned to one EU replica because
+live-table events are process-local in this first release.
 
 After a release, verify the real production path with:
 
 ```bash
-bun run verify:production -- https://your-domain.example
+bun run verify:production -- https://web-production-9aa6b.up.railway.app
 ```
 
 See [ROADMAP.md](./ROADMAP.md) for progress and planned work.
