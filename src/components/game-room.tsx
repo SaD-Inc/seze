@@ -19,6 +19,7 @@ import { quickJoinUrl } from "~/lib/game-links";
 import {
   readOrCreateDisplayName,
   readPlayerToken,
+  storeDisplayName,
   storePlayerToken,
 } from "~/lib/player-token";
 import { cn } from "~/lib/utils";
@@ -125,6 +126,11 @@ export function GameRoom({
     }
   }
 
+  function updateJoinName(displayName: string) {
+    setJoinName(displayName);
+    storeDisplayName(displayName);
+  }
+
   function submitQuickJoin() {
     join.mutate({
       code: normalizedCode,
@@ -206,7 +212,7 @@ export function GameRoom({
               <JoinAtTable
                 quickJoin={quickJoin}
                 name={joinName}
-                setName={setJoinName}
+                setName={updateJoinName}
                 pending={join.isPending}
                 error={join.error?.message}
                 onQuickJoin={submitQuickJoin}

@@ -1,6 +1,8 @@
 const PLAYER_TOKEN_PREFIX = "seze:v1:player:";
 const PLAYER_NAME_KEY = "seze:v1:display-name";
 
+type DisplayNameStorage = Pick<Storage, "getItem" | "setItem">;
+
 const GUEST_ADJECTIVES = [
   "Bold",
   "Bright",
@@ -42,18 +44,33 @@ export function storePlayerToken(
   displayName?: string,
 ): void {
   window.localStorage.setItem(`${PLAYER_TOKEN_PREFIX}${code}`, token);
-  if (displayName) window.localStorage.setItem(PLAYER_NAME_KEY, displayName);
+  if (displayName) storeDisplayName(displayName);
 }
 
-export function readDisplayName(): string {
-  return window.localStorage.getItem(PLAYER_NAME_KEY) ?? "";
+export function readDisplayName(
+  storage: DisplayNameStorage = window.localStorage,
+): string {
+  return storage.getItem(PLAYER_NAME_KEY) ?? "";
 }
 
-export function readOrCreateDisplayName(): string {
-  const savedName = readDisplayName().trim();
+export function storeDisplayName(
+  displayName: string,
+  storage: DisplayNameStorage = window.localStorage,
+): void {
+  const normalizedName = displayName.trim().replace(/\s+/g, " ");
+  if (normalizedName.length < 2) return;
+
+  storage.setItem(PLAYER_NAME_KEY, normalizedName);
+}
+
+export function readOrCreateDisplayName(
+  storage: DisplayNameStorage = window.localStorage,
+  random: () => number = Math.random,
+): string {
+  const savedName = readDisplayName(storage).trim();
   if (savedName.length >= 2) return savedName;
 
-  const generatedName = generateGuestName();
-  window.localStorage.setItem(PLAYER_NAME_KEY, generatedName);
+  const generatedName = generateGuestName(random);
+  storeDisplayName(generatedName, storage);
   return generatedName;
 }

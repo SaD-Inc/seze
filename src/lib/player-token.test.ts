@@ -1,6 +1,19 @@
 import { describe, expect, test } from "bun:test";
 
-import { generateGuestName } from "~/lib/player-token";
+import {
+  generateGuestName,
+  readDisplayName,
+  readOrCreateDisplayName,
+  storeDisplayName,
+} from "~/lib/player-token";
+
+function memoryStorage() {
+  const values = new Map<string, string>();
+  return {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  };
+}
 
 describe("guest names", () => {
   test("generates a friendly two-word alias", () => {
@@ -16,5 +29,18 @@ describe("guest names", () => {
       expect(name.length).toBeGreaterThanOrEqual(2);
       expect(name.length).toBeLessThanOrEqual(24);
     }
+  });
+
+  test("caches generated names and valid player edits", () => {
+    const storage = memoryStorage();
+
+    expect(readOrCreateDisplayName(storage, () => 0)).toBe("Bold Badger");
+    expect(readDisplayName(storage)).toBe("Bold Badger");
+
+    storeDisplayName("  Keen   Fox  ", storage);
+    expect(readOrCreateDisplayName(storage, () => 0.999)).toBe("Keen Fox");
+
+    storeDisplayName("x", storage);
+    expect(readDisplayName(storage)).toBe("Keen Fox");
   });
 });

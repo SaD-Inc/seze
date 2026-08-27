@@ -15,7 +15,11 @@ import {
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { readOrCreateDisplayName, storePlayerToken } from "~/lib/player-token";
+import {
+  readOrCreateDisplayName,
+  storeDisplayName,
+  storePlayerToken,
+} from "~/lib/player-token";
 import { api } from "~/trpc/react";
 
 export function Lobby() {
@@ -51,6 +55,16 @@ export function Lobby() {
     }
   }
 
+  function updateCreateName(displayName: string) {
+    setCreateName(displayName);
+    storeDisplayName(displayName);
+  }
+
+  function updateJoinName(displayName: string) {
+    setJoinName(displayName);
+    storeDisplayName(displayName);
+  }
+
   function submitJoin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (joinName.trim().length >= 2 && joinCode.trim().length >= 6) {
@@ -64,7 +78,7 @@ export function Lobby() {
         <DialogTrigger asChild>
           <Button
             size="lg"
-            className="h-14 flex-1 bg-[#a91f3d] px-6 text-base text-[#fff3dc] shadow-[0_12px_40px_rgba(139,19,45,0.35)] hover:bg-[#bf294a]"
+            className="h-16 w-full bg-[#a91f3d] px-6 text-base text-[#fff3dc] shadow-[0_12px_40px_rgba(139,19,45,0.35)] hover:bg-[#bf294a] sm:flex-1"
           >
             <Plus className="size-5" />
             Create table
@@ -89,7 +103,7 @@ export function Lobby() {
               <Input
                 id="create-name"
                 value={createName}
-                onChange={(event) => setCreateName(event.target.value)}
+                onChange={(event) => updateCreateName(event.target.value)}
                 placeholder="Your name"
                 minLength={2}
                 maxLength={24}
@@ -122,7 +136,7 @@ export function Lobby() {
           <Button
             size="lg"
             variant="outline"
-            className="h-14 flex-1 border-[#d6b46c]/35 bg-[#d6b46c]/7 px-6 text-base text-[#f1d69d] shadow-[0_12px_40px_rgba(0,0,0,0.18)] hover:bg-[#d6b46c]/15 hover:text-[#ffe6b1]"
+            className="h-16 w-full border-[#d6b46c]/35 bg-[#d6b46c]/7 px-6 text-base text-[#f1d69d] shadow-[0_12px_40px_rgba(0,0,0,0.18)] hover:bg-[#d6b46c]/15 hover:text-[#ffe6b1] sm:flex-1"
           >
             <Users className="size-5" />
             Join table
@@ -166,7 +180,7 @@ export function Lobby() {
               <Input
                 id="join-name"
                 value={joinName}
-                onChange={(event) => setJoinName(event.target.value)}
+                onChange={(event) => updateJoinName(event.target.value)}
                 placeholder="Your name"
                 minLength={2}
                 maxLength={24}
