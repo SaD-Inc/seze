@@ -211,6 +211,8 @@
   left: calc(var(--demo-col) * 20% + 2.5%);
   width: 15%;
   aspect-ratio: 1;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 
 .rule-demo-piece {
@@ -335,11 +337,11 @@
   0%,
   18%,
   100% {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
   42%,
   78% {
-    transform: translateX(133.333%);
+    transform: translate3d(133.333%, 0, 0);
   }
 }
 
@@ -347,11 +349,11 @@
   0%,
   18%,
   100% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
   45%,
   78% {
-    transform: translateY(266.666%);
+    transform: translate3d(0, 266.666%, 0);
   }
 }
 
@@ -359,11 +361,11 @@
   0%,
   18%,
   100% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
   42%,
   80% {
-    transform: translateY(-133.333%);
+    transform: translate3d(0, -133.333%, 0);
   }
 }
 
@@ -371,13 +373,11 @@
   0%,
   43%,
   100% {
-    filter: none;
     opacity: 1;
     transform: scale(1);
   }
   54%,
   80% {
-    filter: blur(2px);
     opacity: 0;
     transform: scale(0.25);
   }
@@ -401,15 +401,15 @@
   0%,
   13%,
   100% {
-    transform: translate(0, 0);
+    transform: translate3d(0, 0, 0);
   }
   30%,
   50% {
-    transform: translate(133.333%, 0);
+    transform: translate3d(133.333%, 0, 0);
   }
   72%,
   88% {
-    transform: translate(400%, -266.666%);
+    transform: translate3d(400%, -266.666%, 0);
   }
 }
 
@@ -421,15 +421,15 @@
   }
 
   .rule-demo-guard-move {
-    transform: translateX(133.333%);
+    transform: translate3d(133.333%, 0, 0);
   }
 
   .rule-demo-boss-move {
-    transform: translateY(266.666%);
+    transform: translate3d(0, 266.666%, 0);
   }
 
   .rule-demo-capture-move {
-    transform: translateY(-133.333%);
+    transform: translate3d(0, -133.333%, 0);
   }
 
   .rule-demo-captured {
@@ -438,6 +438,6 @@
   }
 
   .rule-demo-power-move {
-    transform: translate(400%, -266.666%);
+    transform: translate3d(400%, -266.666%, 0);
   }
 }
