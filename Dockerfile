@@ -4,7 +4,7 @@ FROM oven/bun:1.3.14 AS dependencies
 WORKDIR /app
 
 COPY package.json bun.lock ./
-RUN --mount=type=cache,target=/root/.bun/install/cache \
+RUN --mount=type=cache,id=s/dc29c8e6-6626-4dfb-a4cf-d092bb47eafd-/root/.bun/install/cache,target=/root/.bun/install/cache \
   bun install --frozen-lockfile
 
 FROM dependencies AS builder
@@ -12,7 +12,7 @@ FROM dependencies AS builder
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV SKIP_ENV_VALIDATION=1
-RUN --mount=type=cache,target=/app/.next/cache \
+RUN --mount=type=cache,id=s/dc29c8e6-6626-4dfb-a4cf-d092bb47eafd-/app/.next/cache,target=/app/.next/cache \
   bun run build
 
 FROM node:24.19.0-slim AS runner

@@ -56,9 +56,8 @@ bun run dev
 bun run check
 ```
 
-This formats and lints the source, validates TypeScript, runs the 16-test,
-127-assertion rules-engine matrix, and creates the production standalone
-bundle.
+This formats and lints the source, validates TypeScript, runs all game, link,
+guest-name, and retention tests, and creates the production standalone bundle.
 
 The deployed acceptance pass also creates and completes a legal move through
 both a 390×844 mobile viewport and a 1440×900 desktop viewport.
@@ -71,6 +70,10 @@ multi-stage `Dockerfile` with persistent Bun and Next.js caches, then ships only
 the standalone runtime. The app exposes `/api/health`, Railway automatically
 deploys pushes to `main`, and the web runtime is pinned to one EU replica
 because live-table events are process-local in this first release.
+
+A separate Railway cron service runs the bundled `cleanup:games` job once daily
+and deletes tables whose last activity is more than 24 hours old. Foreign-key
+cascades remove the associated players and move history in the same operation.
 
 After a release, verify the real production path with:
 

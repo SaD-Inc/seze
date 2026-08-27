@@ -12,6 +12,7 @@
     "build": "next build && bun run build:runtime && node scripts/prepare-standalone.mjs",
     "build:runtime": "bun build scripts/migrate-production.ts --target=node --outfile=.next/standalone/migrate.mjs",
     "check": "bun run format:check && bun run typecheck && bun run test && bun run build",
+    "cleanup:games": "bun scripts/cleanup-stale-games.ts",
     "db:start": "docker compose up -d --wait postgres",
     "db:stop": "docker compose down",
     "db:generate": "drizzle-kit generate",
@@ -23,7 +24,7 @@
     "format:check": "biome check src scripts next.config.js drizzle.config.ts package.json tsconfig.json components.json biome.json",
     "preview": "bun run build && bun run start",
     "start": "node .next/standalone/start.mjs",
-    "test": "bun test src/**/*.test.ts",
+    "test": "bun test src",
     "verify:production": "bun scripts/verify-production.ts",
     "typecheck": "tsc --noEmit"
   },
