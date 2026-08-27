@@ -2,9 +2,9 @@
 
 A public, guest-first web implementation of the two-player abstract strategy game SE!ZE.
 
-**Play:** [web-production-9aa6b.up.railway.app](https://web-production-9aa6b.up.railway.app)
+**Play:** [playseze.com](https://playseze.com)
 
-**Learn:** [web-production-9aa6b.up.railway.app/rules](https://web-production-9aa6b.up.railway.app/rules)
+**Learn:** [playseze.com/rules](https://playseze.com/rules)
 
 ## Current release
 
@@ -20,7 +20,9 @@ A public, guest-first web implementation of the two-player abstract strategy gam
   or the full board-and-status layout on desktop.
 - Learn through a responsive visual guide with animated movement, capture, and
   power-space examples plus a reduced-motion fallback.
-- Use the provisional `prototype-0.1` ruleset with legal-move highlighting, sandwich captures, power spaces, and all three victory conditions.
+- Use the transcript-confirmed boss terminology and three victory conditions.
+- Use the provisional `prototype-0.1` movement and power rules with legal-move
+  highlighting and sandwich captures.
 - Run as a self-contained Next.js standalone service on Railway.
 
 The rules are incomplete in public sources. Inferred behavior is isolated in the versioned rules engine and clearly labelled in the product.
@@ -69,7 +71,7 @@ live-table events are process-local in this first release.
 After a release, verify the real production path with:
 
 ```bash
-bun run verify:production -- https://web-production-9aa6b.up.railway.app
+bun run verify:production -- https://playseze.com
 ```
 
 See [ROADMAP.md](./ROADMAP.md) for progress and planned work.

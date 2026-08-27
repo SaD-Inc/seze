@@ -43,8 +43,8 @@ export function RulesDialog() {
         </DialogHeader>
         <div className="space-y-5 text-sm leading-6 text-[#d5c5ae]">
           <Rule icon={Shield} title="Move">
-            Guards move one open orthogonal space. Captains move one or two open
-            orthogonal spaces and cannot jump pieces.
+            Guards move one open orthogonal space. In this prototype, bosses
+            move one or two open orthogonal spaces and cannot jump pieces.
           </Rule>
           <Rule icon={Diamond} title="Use power spaces">
             A guard landing on a marked space gains one extended rook-like or
@@ -56,7 +56,7 @@ export function RulesDialog() {
             sides.
           </Rule>
           <Rule icon={Crown} title="Win three ways">
-            Occupy all four central spaces, capture both opposing captains, or
+            Occupy all four central spaces, capture both opposing bosses, or
             reduce the opponent to two remaining pieces.
           </Rule>
           <Button

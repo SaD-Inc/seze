@@ -106,7 +106,7 @@ export function RulesBoardOverview() {
       </div>
       <figcaption className="mt-5 text-center text-sm leading-6 text-[#a99a86]">
         The opening position used by prototype rules v0.1. Four clipped corners,
-        four marked power spaces, and four captains in the center.
+        four marked power spaces, and four bosses in the center.
       </figcaption>
     </figure>
   );
@@ -142,13 +142,13 @@ function DemoPiece({
   row,
   col,
   color,
-  captain = false,
+  boss = false,
   animation,
 }: {
   row: number;
   col: number;
   color: "ivory" | "burgundy";
-  captain?: boolean;
+  boss?: boolean;
   animation?: string;
 }) {
   return (
@@ -159,11 +159,11 @@ function DemoPiece({
         color === "ivory"
           ? "rule-demo-piece-ivory"
           : "rule-demo-piece-burgundy",
-        captain && "rule-demo-piece-captain",
+        boss && "rule-demo-piece-boss",
         animation,
       )}
     >
-      {captain ? <Crown aria-hidden="true" /> : null}
+      {boss ? <Crown aria-hidden="true" /> : null}
     </span>
   );
 }
@@ -199,16 +199,16 @@ export function GuardMoveVisual() {
   );
 }
 
-export function CaptainMoveVisual() {
+export function BossMoveVisual() {
   return (
-    <DemoBoard label="An ivory captain moves two clear squares vertically into the highlighted space.">
+    <DemoBoard label="An ivory boss moves two clear squares vertically into the highlighted space.">
       <Target row={3} col={2} />
       <DemoPiece
         row={1}
         col={2}
         color="ivory"
-        captain
-        animation="rule-demo-captain-move"
+        boss
+        animation="rule-demo-boss-move"
       />
     </DemoBoard>
   );

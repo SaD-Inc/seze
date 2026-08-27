@@ -15,7 +15,7 @@ import Link from "next/link";
 
 import { Brand } from "~/components/brand";
 import {
-  CaptainMoveVisual,
+  BossMoveVisual,
   CaptureVisual,
   GuardMoveVisual,
   PowerMoveVisual,
@@ -101,14 +101,15 @@ export default function RulesPage() {
           <div>
             <Eyebrow>01 · Set the table</Eyebrow>
             <h2 className="mt-4 font-serif text-4xl text-[#f4e5ca] sm:text-5xl">
-              Six guards.
+              Sixteen pieces.
               <br />
-              Two captains.
+              Two bosses per side.
             </h2>
             <div className="mt-7 space-y-5 text-base leading-7 text-[#bbaa93]">
               <p>
                 The board is an 8×8 grid with its four corner squares removed.
-                Each side begins with six guards and two crowned captains.
+                There are 16 pieces total: each side begins with six guards and
+                two crowned bosses.
               </p>
               <p>
                 The four center cells are the heart of the position. The four
@@ -120,8 +121,8 @@ export default function RulesPage() {
               <Legend icon={<Shield />} title="Guard">
                 One orthogonal space
               </Legend>
-              <Legend icon={<Crown />} title="Captain">
-                Up to two orthogonal spaces
+              <Legend icon={<Crown />} title="Boss">
+                Prototype: up to two orthogonal spaces
               </Legend>
             </div>
           </div>
@@ -150,10 +151,11 @@ export default function RulesPage() {
             </RuleCard>
             <RuleCard
               number="02"
-              title="Captains reach two"
-              description="A captain moves one or two open squares in a straight orthogonal line. It cannot jump."
+              title="Bosses reach two"
+              description="In this prototype, a boss moves one or two open squares in a straight orthogonal line. It cannot jump."
+              provisional
             >
-              <CaptainMoveVisual />
+              <BossMoveVisual />
             </RuleCard>
             <RuleCard
               number="03"
@@ -184,8 +186,8 @@ export default function RulesPage() {
             <WinCard icon={<Focus />} number="01" title="Seize the center">
               Occupy all four marked center cells with your own pieces.
             </WinCard>
-            <WinCard icon={<Crown />} number="02" title="Take the captains">
-              Capture both opposing captains through sandwich traps.
+            <WinCard icon={<Crown />} number="02" title="Take the bosses">
+              Capture both opposing bosses through sandwich traps.
             </WinCard>
             <WinCard icon={<Shield />} number="03" title="Break the force">
               Reduce the opponent to only two remaining pieces.
@@ -200,8 +202,8 @@ export default function RulesPage() {
               Clear about what we know
             </h2>
             <p className="mt-5 max-w-2xl leading-7 text-[#bbaa93]">
-              Public descriptions confirm the board shape, piece counts, basic
-              movement, sandwich capture, power-up spaces, and all three win
+              A public gameplay explanation confirms 16 pieces, two bosses per
+              side, their central opening position, and all three win
               conditions. A complete public rulebook has not been found.
             </p>
             <a
@@ -224,10 +226,10 @@ export default function RulesPage() {
                   Prototype interpretation
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-[#b5a58f]">
-                  Exact setup coordinates, stopping after one captain step,
-                  no-jump behavior, which mark grants which power, and the
-                  one-use power lifecycle remain provisional. Every match
-                  records ruleset v0.1 so later revisions stay explicit.
+                  Exact guard setup coordinates, boss movement distance, no-jump
+                  behavior, which mark grants which power, and the one-use power
+                  lifecycle remain provisional. Every match records ruleset v0.1
+                  so later revisions stay explicit.
                 </p>
               </div>
             </div>

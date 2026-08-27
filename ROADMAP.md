@@ -20,6 +20,8 @@ Updated: 2026-08-27
 - [x] keyboard focus limited to playable pieces and legal destinations
 - [x] crawler-safe quick-join links with a one-tap guest seat
 - [x] custom production domain with canonical SEO and social sharing metadata
+- [x] transcript-confirmed boss terminology, 16-piece setup, and three victory
+      conditions reflected in the product
 
 ## Next — validate the game
 

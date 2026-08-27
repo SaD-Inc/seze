@@ -1,7 +1,9 @@
 export type PlayerColor = "ivory" | "burgundy";
+// `captain` is the prototype-0.1 serialized key for the player-facing boss.
 export type PieceKind = "guard" | "captain";
 export type PowerType = "rook" | "bishop";
 export type GameStatus = "waiting" | "active" | "finished";
+// `captains` remains serialized for compatibility; the rule is "take both bosses."
 export type WinReason = "center" | "captains" | "pieces";
 
 export type Coordinate = {

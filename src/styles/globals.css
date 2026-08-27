@@ -193,7 +193,7 @@
   color: #f0ca8a;
 }
 
-.rule-demo-piece-captain {
+.rule-demo-piece-boss {
   box-shadow:
     0 0 0 2px rgba(219, 183, 105, 0.68),
     0 8px 14px rgba(23, 3, 7, 0.38),
@@ -245,8 +245,8 @@
   animation: rule-guard-move 3.6s ease-in-out infinite;
 }
 
-.rule-demo-captain-move {
-  animation: rule-captain-move 3.6s ease-in-out infinite;
+.rule-demo-boss-move {
+  animation: rule-boss-move 3.6s ease-in-out infinite;
 }
 
 .rule-demo-capture-move {
@@ -286,7 +286,7 @@
   }
 }
 
-@keyframes rule-captain-move {
+@keyframes rule-boss-move {
   0%,
   18%,
   100% {
@@ -367,7 +367,7 @@
     transform: translateX(133.333%);
   }
 
-  .rule-demo-captain-move {
+  .rule-demo-boss-move {
     transform: translateY(266.666%);
   }
 

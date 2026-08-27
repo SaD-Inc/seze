@@ -91,8 +91,8 @@ export default function Home() {
           <Feature number="01" title="Seize the center">
             Occupy the four central spaces and hold the heart of the board.
           </Feature>
-          <Feature number="02" title="Take the captains">
-            Use positioning and sandwich captures to remove both captains.
+          <Feature number="02" title="Take the bosses">
+            Use positioning and sandwich captures to remove both bosses.
           </Feature>
           <Feature number="03" title="Break the guard">
             Reduce the opposing force to its final two pieces.

@@ -26,7 +26,7 @@ import { api } from "~/trpc/react";
 
 const winCopy: Record<WinReason, string> = {
   center: "seized all four central spaces",
-  captains: "captured both opposing captains",
+  captains: "captured both opposing bosses",
   pieces: "reduced the opposition to two pieces",
 };
 

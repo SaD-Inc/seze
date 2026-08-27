@@ -44,7 +44,7 @@ describe("prototype SEZE board and setup", () => {
     expect(isPlayableCell({ row: 3, col: 8 })).toBe(false);
   });
 
-  test("starts with six guards, two captains, and unique playable positions", () => {
+  test("starts each side with six guards, two bosses, and unique playable positions", () => {
     const state = createInitialState();
     expect(state.turn).toBe("ivory");
     expect(state.moveNumber).toBe(0);
@@ -92,7 +92,7 @@ describe("prototype SEZE movement", () => {
     ]);
   });
 
-  test("captains move one or two spaces without jumping blockers", () => {
+  test("prototype bosses move one or two spaces without jumping blockers", () => {
     const state = testState([
       gamePiece("i-c1", "ivory", "captain", 4, 4),
       gamePiece("i-g1", "ivory", "guard", 2, 4),
@@ -278,7 +278,7 @@ describe("prototype SEZE capture and victory", () => {
     expect(next.winReason).toBe("center");
   });
 
-  test("wins by capturing both opposing captains", () => {
+  test("wins by capturing both opposing bosses", () => {
     const state = testState([
       gamePiece("i-g1", "ivory", "guard", 3, 1),
       gamePiece("i-g2", "ivory", "guard", 1, 2),
