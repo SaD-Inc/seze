@@ -18,6 +18,7 @@ Updated: 2026-08-27
 - [x] expanded setup, movement, blocker, power, capture, victory, and game-over
       rules tests
 - [x] keyboard focus limited to playable pieces and legal destinations
+- [x] crawler-safe quick-join links with a one-tap guest seat
 - [ ] custom production domain
 
 ## Next — validate the game

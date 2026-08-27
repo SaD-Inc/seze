@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Radio, RotateCcw, Users } from "lucide-react";
+import { Check, Link2, Radio, RotateCcw, Users, Zap } from "lucide-react";
 import Link from "next/link";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import type { PlayerColor, PublicGame, WinReason } from "~/game/types";
+import { quickJoinUrl } from "~/lib/game-links";
 import {
   readDisplayName,
   readPlayerToken,
@@ -29,7 +30,13 @@ const winCopy: Record<WinReason, string> = {
   pieces: "reduced the opposition to two pieces",
 };
 
-export function GameRoom({ code }: { code: string }) {
+export function GameRoom({
+  code,
+  quickJoin = false,
+}: {
+  code: string;
+  quickJoin?: boolean;
+}) {
   const normalizedCode = code.toUpperCase();
   const [token, setToken] = useState<string | null>(null);
   const [tokenLoaded, setTokenLoaded] = useState(false);
@@ -67,8 +74,8 @@ export function GameRoom({ code }: { code: string }) {
   );
 
   const join = api.game.join.useMutation({
-    onSuccess: ({ game, token: newToken }) => {
-      storePlayerToken(game.code, newToken, joinName.trim());
+    onSuccess: ({ game, token: newToken }, variables) => {
+      storePlayerToken(game.code, newToken, variables.displayName.trim());
       setToken(newToken);
       utils.game.get.setData({ code: normalizedCode, token: newToken }, game);
     },
@@ -118,14 +125,23 @@ export function GameRoom({ code }: { code: string }) {
     }
   }
 
+  function submitQuickJoin() {
+    join.mutate({
+      code: normalizedCode,
+      displayName: joinName.trim().length >= 2 ? joinName : "Guest",
+    });
+  }
+
   function makeGameMove(pieceId: string, to: { row: number; col: number }) {
     if (!token) return;
     move.mutate({ code: normalizedCode, token, pieceId, to });
   }
 
   async function copyInvite() {
-    await navigator.clipboard.writeText(window.location.href);
-    toast.success("Invite link copied");
+    await navigator.clipboard.writeText(
+      quickJoinUrl(window.location.origin, normalizedCode),
+    );
+    toast.success("Quick-join link copied");
   }
 
   return (
@@ -181,17 +197,19 @@ export function GameRoom({ code }: { code: string }) {
                     onClick={copyInvite}
                     className="w-full bg-[#9e1c38] text-white hover:bg-[#b62343]"
                   >
-                    <Copy className="size-4" />
-                    Copy invite link
+                    <Link2 className="size-4" />
+                    Copy quick-join link
                   </Button>
                 </CardContent>
               </Card>
             ) : (
               <JoinAtTable
+                quickJoin={quickJoin}
                 name={joinName}
                 setName={setJoinName}
                 pending={join.isPending}
                 error={join.error?.message}
+                onQuickJoin={submitQuickJoin}
                 onSubmit={submitJoin}
               />
             )
@@ -371,26 +389,66 @@ function PlayerRow({
 }
 
 function JoinAtTable({
+  quickJoin,
   name,
   setName,
   pending,
   error,
+  onQuickJoin,
   onSubmit,
 }: {
+  quickJoin: boolean;
   name: string;
   setName: (name: string) => void;
   pending: boolean;
   error?: string;
+  onQuickJoin: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const quickName = name.trim().length >= 2 ? name.trim() : "Guest";
+
   return (
     <Card className="border-[#d9b86d]/20 bg-[#1a0c0e]/85 text-[#f2e5cd]">
       <CardHeader>
+        {quickJoin ? (
+          <Badge className="mb-1 w-fit border-0 bg-[#7d142c] text-[#f2d69a]">
+            <Zap className="size-3.5" /> Quick join
+          </Badge>
+        ) : null}
         <CardTitle className="font-serif text-xl">
-          Take the Burgundy seat
+          {quickJoin ? "Your seat is ready" : "Take the Burgundy seat"}
         </CardTitle>
+        {quickJoin ? (
+          <p className="text-sm leading-6 text-[#b9a78e]">
+            Join as {quickName} with no account, or choose another name below.
+          </p>
+        ) : null}
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {quickJoin ? (
+          <>
+            <Button
+              type="button"
+              onClick={onQuickJoin}
+              disabled={pending}
+              className="min-h-11 w-full bg-[#a91f3d] text-white hover:bg-[#bf294a]"
+            >
+              {pending ? (
+                <RotateCcw className="size-4 animate-spin" />
+              ) : (
+                <Zap className="size-4" />
+              )}
+              {pending ? "Joining…" : `Join as ${quickName}`}
+            </Button>
+            <div className="flex items-center gap-3" aria-hidden="true">
+              <Separator className="flex-1 bg-[#d6b468]/15" />
+              <span className="text-[0.68rem] uppercase tracking-[0.16em] text-[#887b69]">
+                or choose a name
+              </span>
+              <Separator className="flex-1 bg-[#d6b468]/15" />
+            </div>
+          </>
+        ) : null}
         <form className="space-y-4" onSubmit={onSubmit}>
           <div className="space-y-2">
             <Label htmlFor="table-name">Your name</Label>
@@ -401,6 +459,7 @@ function JoinAtTable({
               minLength={2}
               maxLength={24}
               placeholder="Player two"
+              autoComplete="nickname"
               className="border-[#d7b76e]/20 bg-black/20"
             />
           </div>

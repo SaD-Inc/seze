@@ -19,6 +19,15 @@ const client = createTRPCClient<AppRouter>({
 const created = await client.game.create.mutate({
   displayName: "Release Ivory",
 });
+const quickJoinResponse = await fetch(
+  `${baseUrl}/join/${encodeURIComponent(created.game.code)}`,
+);
+if (!quickJoinResponse.ok) {
+  throw new Error(
+    `The quick-join route failed with HTTP ${quickJoinResponse.status}.`,
+  );
+}
+
 const joined = await client.game.join.mutate({
   code: created.game.code,
   displayName: "Release Burgundy",
@@ -86,7 +95,8 @@ console.log(
   JSON.stringify(
     {
       code: created.game.code,
-      health: "guest create → join → move → SSE → persisted reload",
+      health:
+        "guest create → quick-link resolve → join → move → SSE → persisted reload",
       status: "ok",
       version: moved.version,
     },

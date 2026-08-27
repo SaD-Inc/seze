@@ -10,6 +10,8 @@ A public, guest-first web implementation of the two-player abstract strategy gam
 
 - Create a private two-player table without an account.
 - Join with a six-character code or shared link.
+- Share a `/join/CODE` quick-join link that offers a safe one-tap guest seat
+  without allowing link-preview crawlers to consume it.
 - Play on a synchronized, server-authoritative board.
 - Reconnect to a persisted PostgreSQL game.
 - Play with touch-sized controls and an always-visible turn summary on phones,
