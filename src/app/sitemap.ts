@@ -3,18 +3,20 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "~/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const lastModified = new Date(siteConfig.contentLastModified);
+
   return [
     {
       url: siteConfig.url,
-      lastModified: new Date("2026-08-27"),
-      changeFrequency: "weekly",
-      priority: 1,
+      lastModified,
     },
     {
       url: `${siteConfig.url}/rules`,
-      lastModified: new Date("2026-08-27"),
-      changeFrequency: "monthly",
-      priority: 0.8,
+      lastModified,
+    },
+    {
+      url: `${siteConfig.url}/strategy`,
+      lastModified,
     },
   ];
 }

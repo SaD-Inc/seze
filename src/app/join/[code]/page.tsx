@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import { GameRoom } from "~/components/game-room";
+import { Toaster } from "~/components/ui/sonner";
+import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
   title: "Quick join",
@@ -14,5 +16,10 @@ export default async function QuickJoinPage({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  return <GameRoom code={code} quickJoin />;
+  return (
+    <TRPCReactProvider>
+      <GameRoom code={code} quickJoin />
+      <Toaster richColors position="top-center" />
+    </TRPCReactProvider>
+  );
 }

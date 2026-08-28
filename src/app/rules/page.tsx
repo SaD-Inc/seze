@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Brand } from "~/components/brand";
+import { JsonLd } from "~/components/json-ld";
 import {
   BossMoveVisual,
   CaptureVisual,
@@ -23,23 +24,45 @@ import {
 } from "~/components/rules-visuals";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { siteConfig } from "~/lib/site";
+import { rulesStructuredData } from "~/lib/structured-data";
+
+const title = "How to Play SE!ZE — Rules, Moves & Ways to Win";
+const description =
+  "Learn how to play SE!ZE: set up all 16 pieces, move guards and bosses, make sandwich captures, use power spaces, and master all three ways to win.";
 
 export const metadata: Metadata = {
-  title: "How to play",
-  description:
-    "Learn the SE!ZE rules with animated examples for movement, power spaces, captures, and all three ways to win.",
+  title: { absolute: title },
+  description,
   alternates: { canonical: "/rules" },
   openGraph: {
-    title: "How to play SE!ZE",
-    description:
-      "Learn setup, movement, captures, power spaces, and all three ways to win with animated examples.",
+    type: "article",
+    locale: siteConfig.locale,
     url: "/rules",
+    siteName: siteConfig.name,
+    title,
+    description,
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Play SE!ZE online — a two-player strategy game",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: ["/twitter-image"],
   },
 };
 
 export default function RulesPage() {
   return (
     <main className="relative min-h-screen overflow-hidden px-4 pb-20 text-[#f5e8d1] sm:px-6">
+      <JsonLd id="rules-structured-data" data={rulesStructuredData} />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[54rem] bg-[radial-gradient(circle_at_50%_-12%,rgba(151,24,52,0.5),transparent_60%)]" />
       <div className="relative mx-auto max-w-6xl">
         <header className="flex items-center justify-between py-5 sm:py-6">
@@ -76,9 +99,9 @@ export default function RulesPage() {
             <BookOpenCheck className="size-3.5" /> Rules guide
           </Badge>
           <h1 className="mt-7 font-serif text-5xl leading-[0.95] text-[#fff0d3] sm:text-7xl">
-            Learn the board.
+            How to play SE!ZE.
             <br />
-            <span className="text-[#d14a61]">Seize the game.</span>
+            <span className="text-[#d14a61]">Learn the board.</span>
           </h1>
           <p className="mx-auto mt-7 max-w-2xl text-balance text-lg leading-8 text-[#c7b59e]">
             Two players alternate one move at a time. Control space, create a
@@ -95,6 +118,11 @@ export default function RulesPage() {
               <Focus className="size-4 text-[#d2ae63]" /> 3 ways to win
             </span>
           </div>
+          <p className="mt-6 text-xs text-[#8f816e]">
+            <time dateTime={siteConfig.contentLastModified}>
+              Last reviewed 28 August 2026
+            </time>
+          </p>
         </section>
 
         <section className="grid items-center gap-12 border-y border-[#d7b76f]/12 py-16 sm:py-24 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
@@ -244,19 +272,43 @@ export default function RulesPage() {
             Create a table as a guest, send the invite link, and play from any
             phone or desktop browser.
           </p>
-          <Button
-            asChild
-            size="lg"
-            className="mt-8 min-h-12 bg-[#a31d3a] px-7 text-white hover:bg-[#bb2747]"
-          >
-            <Link href="/">
-              Create a game <ArrowRight className="size-4" />
-            </Link>
-          </Button>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Button
+              asChild
+              size="lg"
+              className="min-h-12 bg-[#a31d3a] px-7 text-white hover:bg-[#bb2747]"
+            >
+              <Link href="/">
+                Create a game <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="min-h-12 border-[#d6b46c]/25 bg-[#d6b46c]/5 px-7 text-[#e9cc90] hover:bg-[#d6b46c]/12 hover:text-[#ffe5ad]"
+            >
+              <Link href="/strategy">Read the strategy guide</Link>
+            </Button>
+          </div>
         </section>
 
-        <footer className="mt-16 border-t border-[#d7b76f]/10 py-8 text-center text-xs text-[#766b5d]">
-          SE!ZE · Learn the board, then take the center.
+        <footer className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-[#d7b76f]/10 py-8 text-xs text-[#766b5d] sm:flex-row">
+          <p>SE!ZE · Learn the board, then take the center.</p>
+          <nav
+            className="flex items-center gap-5"
+            aria-label="Footer navigation"
+          >
+            <Link className="hover:text-[#c8ac75]" href="/">
+              Play
+            </Link>
+            <Link className="hover:text-[#c8ac75]" href="/rules">
+              Rules
+            </Link>
+            <Link className="hover:text-[#c8ac75]" href="/strategy">
+              Strategy
+            </Link>
+          </nav>
         </footer>
       </div>
     </main>

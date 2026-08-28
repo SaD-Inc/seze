@@ -2,12 +2,9 @@ import "~/styles/globals.css";
 
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
-import { Toaster } from "~/components/ui/sonner";
-import { TooltipProvider } from "~/components/ui/tooltip";
 import { siteConfig } from "~/lib/site";
-import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -17,47 +14,20 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
+  category: "games",
   alternates: { canonical: "/" },
-  keywords: [
-    "SEZE game",
-    "SE!ZE",
-    "online board game",
-    "two player strategy game",
-    "abstract strategy game",
-    "free multiplayer game",
-    "Charles Leclerc",
-    "Hikaru Nakamura",
-    "James Wallis",
-    "Chivas Regal",
-    "Chivas Regal 16",
-    "Pernod Ricard",
-    "Baby Teeth",
-    "Formula 1",
-    "F1 strategy game",
-    "SEZE Charles Leclerc",
-    "SEZE Hikaru Nakamura",
-  ],
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: siteConfig.locale,
     url: "/",
     siteName: siteConfig.name,
     title: siteConfig.title,
     description: siteConfig.description,
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "SE!ZE — a game of position and pressure",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: siteConfig.title,
     description: siteConfig.description,
-    images: ["/opengraph-image"],
   },
   robots: {
     index: true,
@@ -70,7 +40,15 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
-  icons: [{ rel: "icon", url: "/icon.svg" }],
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  colorScheme: "dark",
+  themeColor: "#170a0d",
 };
 
 export default function RootLayout({
@@ -82,12 +60,7 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       className={`${GeistSans.variable} ${GeistMono.variable} dark`}
     >
-      <body className="antialiased">
-        <TRPCReactProvider>
-          <TooltipProvider>{children}</TooltipProvider>
-          <Toaster richColors position="top-center" />
-        </TRPCReactProvider>
-      </body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { GameHistory } from "~/components/game-history";
+import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
   title: "Review game",
@@ -14,5 +15,9 @@ export default async function GameHistoryPage({
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  return <GameHistory code={code} />;
+  return (
+    <TRPCReactProvider>
+      <GameHistory code={code} />
+    </TRPCReactProvider>
+  );
 }

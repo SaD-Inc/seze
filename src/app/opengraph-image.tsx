@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "SE!ZE — a game of position and pressure";
+export const alt = "Play SE!ZE online — a two-player strategy game";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -46,7 +46,7 @@ export default function OpenGraphImage() {
             textTransform: "uppercase",
           }}
         >
-          A game of position and pressure
+          Free two-player strategy game
         </div>
         <div
           style={{

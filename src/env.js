@@ -19,8 +19,8 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: z.string().startsWith("phc_"),
-    NEXT_PUBLIC_POSTHOG_HOST: z.string().url(),
+    NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: z.string().startsWith("phc_").optional(),
+    NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
   },
 
   /**
