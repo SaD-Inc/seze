@@ -115,13 +115,21 @@ export function RulesBoardOverview() {
 function DemoBoard({
   children,
   label,
+  pace = "standard",
 }: {
   children: ReactNode;
   label: string;
+  pace?: "standard" | "power";
 }) {
   return (
     <figure>
-      <div className="rule-demo-board" aria-hidden="true">
+      <div
+        className={cn(
+          "rule-demo-board",
+          pace === "power" && "rule-demo-board-power",
+        )}
+        aria-hidden="true"
+      >
         {demoCells.map((cell) => (
           <span
             key={`${cell.row}:${cell.col}`}
@@ -131,7 +139,7 @@ function DemoBoard({
             )}
           />
         ))}
-        {children}
+        <span className="rule-demo-scene">{children}</span>
       </div>
       <figcaption className="sr-only">{label}</figcaption>
     </figure>
@@ -162,7 +170,7 @@ function DemoPiece({
           ? "rule-demo-piece-ivory"
           : "rule-demo-piece-burgundy",
         boss && "rule-demo-piece-boss",
-        animation,
+        animation ?? "rule-demo-piece-appear",
       )}
     >
       {boss ? <Crown aria-hidden="true" /> : null}
@@ -248,7 +256,10 @@ export function CaptureVisual() {
 
 export function PowerMoveVisual() {
   return (
-    <DemoBoard label="An ivory guard lands on an × power piece, attaches it, and gains bishop-like diagonal movement.">
+    <DemoBoard
+      label="An ivory guard lands on an × power piece, attaches it, and gains bishop-like diagonal movement."
+      pace="power"
+    >
       <span style={position(3, 1)} className="rule-demo-power-space">
         <X aria-hidden="true" />
       </span>
