@@ -19,6 +19,8 @@ jobs:
     timeout-minutes: 15
     env:
       DATABASE_URL: postgresql://seze:seze@127.0.0.1:54331/seze
+      NEXT_PUBLIC_POSTHOG_HOST: https://e.playseze.com
+      NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: phc_nnj4dGc4sPqwFJibGW4JpSoE34qKSv2Bw9XhXyrEaqdY
       TEST_DATABASE_URL: postgresql://seze:seze@127.0.0.1:54331/seze
     services:
       postgres:
