@@ -3,6 +3,7 @@ import {
   ArrowRight,
   CircleDot,
   Clock3,
+  Crown,
   Lightbulb,
   Users,
 } from "lucide-react";
@@ -25,7 +26,7 @@ export default function Home() {
         <div className="pointer-events-none absolute start-[-12rem] top-72 size-[32rem] rounded-full bg-[#73152a]/10 blur-3xl" />
         <div className="relative mx-auto max-w-6xl">
           <div className="flex min-h-svh flex-col">
-            <header className="flex shrink-0 items-center justify-between py-6">
+            <header className="flex shrink-0 items-center justify-between py-4 sm:py-6">
               <Brand />
               <div className="flex items-center gap-1 sm:gap-2">
                 <Button
@@ -67,10 +68,14 @@ export default function Home() {
               </div>
             </header>
 
-            <section className="relative flex flex-1 flex-col items-center justify-center py-10 text-center sm:py-12">
+            <section className="relative flex flex-1 flex-col items-center justify-center pb-20 pt-6 text-center sm:py-12">
               <div className="home-arena" aria-hidden="true">
-                <span className="home-arena-piece home-arena-piece-ivory" />
-                <span className="home-arena-piece home-arena-piece-burgundy" />
+                <span className="home-arena-piece home-arena-piece-ivory">
+                  <Crown />
+                </span>
+                <span className="home-arena-piece home-arena-piece-burgundy">
+                  <Crown />
+                </span>
               </div>
               <div className="relative z-10 flex w-full flex-col items-center">
                 <h1 className="font-serif text-6xl leading-none tracking-[0.08em] text-[#fff0d3] drop-shadow-2xl sm:text-8xl md:text-[9rem]">
@@ -83,7 +88,7 @@ export default function Home() {
                 <div className="mt-7 w-full">
                   <Lobby />
                 </div>
-                <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-[#a99a85]">
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-sm text-[#a99a85] sm:mt-8 sm:gap-x-6">
                   <span className="flex items-center gap-2">
                     <Users className="size-4 text-[#d2ae63]" /> 2 players
                   </span>
@@ -207,7 +212,7 @@ export default function Home() {
                 className="bg-[#9c1b37] text-white hover:bg-[#b62343]"
               >
                 <Link href="/rules">
-                  Read the complete rules <ArrowRight className="size-4" />
+                  Read the rules <ArrowRight className="size-4" />
                 </Link>
               </Button>
               <Button

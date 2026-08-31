@@ -1,11 +1,11 @@
 import { Crown, Plus, X } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 
+import { GamePieceToken } from "~/components/game-piece-token";
 import {
   BOARD_SIZE,
   coordinateKey,
   createInitialState,
-  isCenterCell,
   isPlayableCell,
   powerAt,
 } from "~/game/rules";
@@ -36,22 +36,12 @@ function position(row: number, col: number): PositionedStyle {
 
 function OverviewPiece({ piece }: { piece: GamePiece }) {
   return (
-    <span
-      className={cn(
-        "relative z-10 grid size-[72%] place-items-center rounded-full border shadow-[0_5px_10px_rgba(18,2,5,0.4),inset_0_1px_1px_rgba(255,255,255,0.35),inset_0_-3px_5px_rgba(0,0,0,0.32)]",
-        piece.color === "ivory"
-          ? "border-[#9c8359] bg-[radial-gradient(circle_at_35%_28%,#fffaf0_0%,#e8d7b8_55%,#ac9062_100%)] text-[#694d2e]"
-          : "border-[#e5ad78]/55 bg-[radial-gradient(circle_at_35%_28%,#bd3e4c_0%,#741426_48%,#2c0610_100%)] text-[#f0ca8a]",
-        piece.kind === "captain" &&
-          "ring-1 ring-[#e2bd72]/70 ring-offset-1 ring-offset-[#6f1126]",
-      )}
-    >
-      {piece.kind === "captain" ? (
-        <Crown className="size-[44%]" strokeWidth={1.8} />
-      ) : (
-        <span className="size-[26%] rounded-full border border-current/55" />
-      )}
-    </span>
+    <GamePieceToken
+      color={piece.color}
+      kind={piece.kind}
+      power={piece.power}
+      className="z-10"
+    />
   );
 }
 
@@ -65,7 +55,7 @@ export function RulesBoardOverview() {
     <figure className="mx-auto w-full max-w-[36rem]">
       <div
         aria-hidden="true"
-        className="relative grid aspect-square grid-cols-8 overflow-hidden rounded-[1.4rem] border-4 border-[#9b6b31] bg-[#26070d] p-1.5 shadow-[0_28px_80px_rgba(0,0,0,0.42),inset_0_0_24px_rgba(0,0,0,0.72)] sm:p-2"
+        className="relative grid aspect-square grid-cols-8 overflow-hidden rounded-xl border-[3px] border-[var(--game-board-edge)] bg-[#242223] p-1 shadow-[0_10px_28px_rgba(0,0,0,0.32)] sm:p-2"
       >
         {overviewCoordinates.map((coordinate) => {
           const key = coordinateKey(coordinate);
@@ -79,23 +69,25 @@ export function RulesBoardOverview() {
             <span
               key={key}
               className={cn(
-                "relative grid aspect-square place-items-center border border-[#4d0714]/35",
+                "relative grid aspect-square place-items-center",
                 (coordinate.row + coordinate.col) % 2 === 0
-                  ? "bg-[#971c37]"
-                  : "bg-[#7c132b]",
-                isCenterCell(coordinate) &&
-                  "shadow-[inset_0_0_0_2px_rgba(233,198,121,0.78)]",
+                  ? "bg-[var(--game-tile-light)]"
+                  : "bg-[var(--game-tile-dark)]",
               )}
             >
-              {isCenterCell(coordinate) ? (
-                <span className="absolute size-[62%] rotate-45 rounded-[18%] border border-[#efd38e]/55" />
-              ) : null}
               {power ? (
-                <span className="absolute grid size-[44%] place-items-center text-[#edcb81]/90 drop-shadow-[0_2px_1px_rgba(45,13,9,0.85)]">
+                <span
+                  className={cn(
+                    "absolute grid size-[34%] place-items-center",
+                    (coordinate.row + coordinate.col) % 2 === 0
+                      ? "text-[#89672d]"
+                      : "text-[#cfb46f]",
+                  )}
+                >
                   {power === "rook" ? (
-                    <Plus className="size-full" strokeWidth={3.5} />
+                    <Plus className="size-full" strokeWidth={3.25} />
                   ) : (
-                    <X className="size-full" strokeWidth={3.5} />
+                    <X className="size-full" strokeWidth={3.25} />
                   )}
                 </span>
               ) : null}
@@ -103,6 +95,7 @@ export function RulesBoardOverview() {
             </span>
           );
         })}
+        <span className="pointer-events-none absolute inset-0 z-20 col-start-3 col-end-7 row-start-3 row-end-7 border-2 border-[var(--game-gold)]/80" />
       </div>
       <figcaption className="mt-5 text-center text-sm leading-6 text-[#a99a86]">
         The opening position. Four clipped corners, eight bare +/× power pieces,
@@ -206,7 +199,7 @@ function Target({
 
 export function GuardMoveVisual() {
   return (
-    <DemoBoard label="An ivory guard moves one square horizontally into the highlighted space.">
+    <DemoBoard label="A yellow guard moves one square horizontally into the highlighted space.">
       <Target row={2} col={3} />
       <DemoPiece
         row={2}
@@ -220,7 +213,7 @@ export function GuardMoveVisual() {
 
 export function BossMoveVisual() {
   return (
-    <DemoBoard label="An ivory boss moves two clear squares diagonally into the highlighted space.">
+    <DemoBoard label="A yellow boss moves two clear squares diagonally into the highlighted space.">
       <Target row={3} col={3} />
       <DemoPiece
         row={1}
@@ -235,7 +228,7 @@ export function BossMoveVisual() {
 
 export function CaptureVisual() {
   return (
-    <DemoBoard label="An ivory guard moves upward, trapping and removing a burgundy guard between two ivory pieces.">
+    <DemoBoard label="A yellow guard moves upward, trapping and removing a burgundy guard between two yellow pieces.">
       <DemoPiece row={2} col={3} color="ivory" />
       <DemoPiece
         row={2}
@@ -257,7 +250,7 @@ export function CaptureVisual() {
 export function PowerMoveVisual() {
   return (
     <DemoBoard
-      label="An ivory guard lands on an × power piece, attaches it, and gains bishop-like diagonal movement."
+      label="A yellow guard lands on an × power piece, attaches it, and gains bishop-like diagonal movement."
       pace="power"
     >
       <span style={position(3, 1)} className="rule-demo-power-space">

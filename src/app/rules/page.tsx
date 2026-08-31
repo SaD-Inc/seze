@@ -4,7 +4,6 @@ import {
   CircleDot,
   Crown,
   Diamond,
-  ExternalLink,
   Focus,
   Plus,
   Shield,
@@ -98,10 +97,11 @@ export default function RulesPage() {
           >
             <BookOpenCheck className="size-3.5" /> Rules guide
           </Badge>
-          <h1 className="mt-7 font-serif text-5xl leading-[0.95] text-[#fff0d3] sm:text-7xl">
-            How to play SE!ZE.
-            <br />
-            <span className="text-[#d14a61]">Learn the board.</span>
+          <h1 className="mt-7 font-serif text-[clamp(2rem,9.3vw,2.5rem)] leading-[1.08] text-[#fff0d3] sm:text-7xl sm:leading-[1.02]">
+            <span className="block whitespace-nowrap">How to play SE!ZE.</span>
+            <span className="mt-2 block text-[#d14a61] sm:mt-1">
+              Learn the board.
+            </span>
           </h1>
           <p className="mx-auto mt-7 max-w-2xl text-balance text-lg leading-8 text-[#c7b59e]">
             Two players alternate one move at a time. Control space, create a
@@ -140,7 +140,7 @@ export default function RulesPage() {
                 two crowned bosses.
               </p>
               <p>
-                All 16 pieces fill the central 4×4: Ivory takes the upper two
+                All 16 pieces fill the central 4×4: Yellow takes the upper two
                 rows and Burgundy the lower two. Eight bare power pieces sit on
                 the perimeter—four + and four ×, one of each per side.
               </p>
@@ -232,15 +232,6 @@ export default function RulesPage() {
               side, their central opening position, and all three win
               conditions. A complete public rulebook has not been found.
             </p>
-            <a
-              href="https://boardgamegeek.com/boardgame/469945/seze"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-6 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[#ddbd78] underline-offset-4 hover:text-[#f4d795] hover:underline"
-            >
-              Read the public game summary
-              <ExternalLink className="size-4" />
-            </a>
           </div>
           <div className="rounded-2xl border border-[#d5b46b]/18 bg-[#1a0c0e]/75 p-6 shadow-xl sm:p-8">
             <div className="flex items-start gap-4">

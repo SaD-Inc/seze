@@ -335,8 +335,10 @@ function HistoryRow({
           className={cn(
             "size-3 shrink-0 rounded-full border",
             !color && "border-[#8c7d68] bg-[#3a2c27]",
-            color === "ivory" && "border-[#a88a58] bg-[#eadabd]",
-            color === "burgundy" && "border-[#d47b6c]/55 bg-[#8f1c35]",
+            color === "ivory" &&
+              "border-[var(--game-gold)] bg-[var(--game-piece-yellow)]",
+            color === "burgundy" &&
+              "border-[var(--game-gold)] bg-[var(--game-piece-burgundy)]",
           )}
         />
         <span className="min-w-0 flex-1">
@@ -351,7 +353,7 @@ function HistoryRow({
 }
 
 function colorName(color: "ivory" | "burgundy") {
-  return color === "ivory" ? "Ivory" : "Burgundy";
+  return color === "ivory" ? "Yellow" : "Burgundy";
 }
 
 function pieceName(piece?: GamePiece) {

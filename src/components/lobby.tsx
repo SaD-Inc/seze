@@ -76,7 +76,14 @@ export function Lobby() {
             Create table
           </Button>
         </DialogTrigger>
-        <DialogContent className="border-[#e8cc91]/20 bg-[#180b0d] p-6 text-[#f7ecd6] shadow-2xl sm:max-w-md">
+        <DialogContent
+          tabIndex={-1}
+          className="border-[#e8cc91]/20 bg-[#180b0d] p-6 text-[#f7ecd6] shadow-2xl sm:max-w-md"
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            (event.currentTarget as HTMLElement | null)?.focus();
+          }}
+        >
           <DialogHeader className="pe-8">
             <div className="mb-2 grid size-11 place-items-center rounded-full bg-[#8f1630] text-[#f6deb0]">
               <Swords className="size-5" />
@@ -85,7 +92,7 @@ export function Lobby() {
               Create a table
             </DialogTitle>
             <DialogDescription className="leading-6 text-[#bfae97]">
-              You’ll take Ivory. We’ll make a private table and give you a link
+              You’ll take Yellow. We’ll make a private table and give you a link
               to invite your opponent.
             </DialogDescription>
           </DialogHeader>
@@ -134,7 +141,14 @@ export function Lobby() {
             Join table
           </Button>
         </DialogTrigger>
-        <DialogContent className="border-[#e8cc91]/20 bg-[#180b0d] p-6 text-[#f7ecd6] shadow-2xl sm:max-w-md">
+        <DialogContent
+          tabIndex={-1}
+          className="border-[#e8cc91]/20 bg-[#180b0d] p-6 text-[#f7ecd6] shadow-2xl sm:max-w-md"
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            (event.currentTarget as HTMLElement | null)?.focus();
+          }}
+        >
           <DialogHeader className="pe-8">
             <div className="mb-2 grid size-11 place-items-center rounded-full border border-[#cda85f]/35 bg-[#271a13] text-[#e3c17c]">
               <Users className="size-5" />
@@ -160,7 +174,6 @@ export function Lobby() {
                 placeholder="AB12CD"
                 minLength={6}
                 maxLength={8}
-                autoFocus
                 autoCapitalize="characters"
                 autoCorrect="off"
                 spellCheck={false}

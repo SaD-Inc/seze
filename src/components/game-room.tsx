@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Brand } from "~/components/brand";
@@ -25,6 +25,12 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import type { PlayerColor, PublicGame, WinReason } from "~/game/types";
 import { quickJoinUrl } from "~/lib/game-links";
+import {
+  advanceSoundedMove,
+  playMoveSound,
+  primeGameAudio,
+  type SoundedMove,
+} from "~/lib/game-sound";
 import {
   readOrCreateDisplayName,
   readPlayerToken,
@@ -53,6 +59,7 @@ export function GameRoom({
   const [tokenLoaded, setTokenLoaded] = useState(false);
   const [suggestedName, setSuggestedName] = useState("");
   const [joinName, setJoinName] = useState("");
+  const soundedMove = useRef<SoundedMove>(null);
   const utils = api.useUtils();
 
   useEffect(() => {
@@ -72,6 +79,25 @@ export function GameRoom({
     enabled: tokenLoaded,
     refetchOnWindowFocus: true,
   });
+
+  const moveNumber = gameQuery.data?.state.moveNumber;
+
+  useEffect(() => {
+    if (moveNumber === undefined) return;
+
+    const result = advanceSoundedMove(
+      soundedMove.current,
+      normalizedCode,
+      moveNumber,
+    );
+    soundedMove.current = result.next;
+    if (result.shouldPlay) void playMoveSound();
+  }, [moveNumber, normalizedCode]);
+
+  useEffect(() => {
+    window.addEventListener("pointerdown", primeGameAudio, { once: true });
+    return () => window.removeEventListener("pointerdown", primeGameAudio);
+  }, []);
 
   api.game.onChange.useSubscription(queryInput, {
     enabled: tokenLoaded,
@@ -169,6 +195,7 @@ export function GameRoom({
 
   function makeGameMove(pieceId: string, to: { row: number; col: number }) {
     if (!token) return;
+    primeGameAudio();
     move.mutate({ code: normalizedCode, token, pieceId, to });
   }
 
@@ -229,7 +256,7 @@ export function GameRoom({
       </header>
 
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_290px] lg:items-center lg:gap-8">
-        <section className="flex min-h-0 items-start justify-center px-1 py-2 sm:px-8 sm:py-4 lg:min-h-[calc(100vh-6rem)] lg:items-center lg:py-6">
+        <section className="-mx-2 flex min-h-0 items-start justify-center py-2 sm:mx-0 sm:px-8 sm:py-4 lg:min-h-[calc(100vh-6rem)] lg:items-center lg:py-6">
           <div className="relative flex w-[min(100%,calc(100svh-15rem))] max-w-[720px] flex-col">
             <BoardPlayerBar
               game={game}
@@ -311,8 +338,8 @@ function TurnColorChip({ color }: { color: PlayerColor }) {
       className={cn(
         "flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] shadow-lg",
         color === "ivory"
-          ? "border-[#f5e7ca] bg-[#eadabd] text-[#3c2817]"
-          : "border-[#e17086]/45 bg-[#8f1c35] text-[#fff0df]",
+          ? "border-[#8a763e] bg-[#1d1a17] text-[#f0e4c5]"
+          : "border-[#6e2b3b] bg-[#1d1719] text-[#f0dfe2]",
       )}
     >
       <span
@@ -320,8 +347,8 @@ function TurnColorChip({ color }: { color: PlayerColor }) {
         className={cn(
           "size-2.5 rounded-full border",
           color === "ivory"
-            ? "border-[#9e8153] bg-[#fff7e8]"
-            : "border-[#f1a0a9]/55 bg-[#c53655]",
+            ? "border-[var(--game-gold)] bg-[var(--game-piece-yellow)]"
+            : "border-[var(--game-gold)] bg-[var(--game-piece-burgundy)]",
         )}
       />
       {colorName(color)} to move
@@ -465,27 +492,24 @@ function BoardPlayerBar({
       role={active ? "status" : undefined}
       aria-live={active ? "polite" : undefined}
       className={cn(
-        "relative z-0 flex min-h-14 items-center gap-3 border px-3 transition-colors",
+        "relative z-0 mx-3 flex min-h-14 items-center gap-3 border px-3 transition-colors",
         placement === "top"
-          ? "rounded-t-xl rounded-b-none pt-2 pb-4"
-          : "rounded-t-none rounded-b-xl pt-4 pb-2",
-        active && color === "ivory"
-          ? "border-[#cdbb99] bg-[#d8c9ad] text-[#3a2818] shadow-[0_5px_18px_rgba(225,199,143,0.1)]"
-          : active && color === "burgundy"
-            ? "border-[#a84a60] bg-[#64172a] text-[#f4e5d4] shadow-[0_5px_18px_rgba(100,23,42,0.16)]"
-            : winner
-              ? "border-[#d8b86f]/60 bg-[#d8b86f]/14 text-[#f2e5cd]"
-              : "border-[#d6b46c]/14 bg-[#160a0c]/72 text-[#ddccb0]",
+          ? "-mb-3 rounded-t-xl rounded-b-none pt-2 pb-5"
+          : "-mt-3 rounded-t-none rounded-b-xl pt-5 pb-2",
+        active
+          ? "border-[#6f9692] bg-[#1d1a1c] text-[#f2e8da]"
+          : winner
+            ? "border-[#d8b86f]/60 bg-[#d8b86f]/14 text-[#f2e5cd]"
+            : "border-[#5d454b] bg-[#171315] text-[#ddccb0]",
       )}
     >
       <span
         aria-hidden="true"
         className={cn(
-          "size-8 shrink-0 rounded-full border shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),inset_0_-3px_5px_rgba(0,0,0,0.3)]",
+          "size-8 shrink-0 rounded-full border-2 border-[var(--game-gold)] shadow-[0_1px_2px_rgba(0,0,0,0.35)]",
           color === "ivory"
-            ? "border-black/70 bg-[#e6c83e]"
-            : "border-[#d17078]/55 bg-[#75152b]",
-          active && "ring-2 ring-current/35 ring-offset-2 ring-offset-inherit",
+            ? "bg-[var(--game-piece-yellow)]"
+            : "bg-[var(--game-piece-burgundy)]",
         )}
       />
       <div className="min-w-0 flex-1">
@@ -495,21 +519,22 @@ function BoardPlayerBar({
           </span>
           {viewer ? (
             <span className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] opacity-65">
-              You<span className="hidden sm:inline"> · {colorName(color)}</span>
+              You
             </span>
           ) : null}
         </div>
       </div>
       <span className="text-xs tabular-nums opacity-65">{pieces}/8</span>
       {stateLabel ? (
-        <span className="rounded-full bg-current px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em]">
-          <span
-            className={cn(
-              active && color === "ivory" ? "text-[#f5ead5]" : "text-[#2e1214]",
-            )}
-          >
-            {stateLabel}
-          </span>
+        <span
+          className={cn(
+            "rounded-full px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em]",
+            active
+              ? "bg-[#789b97] text-[#14211f]"
+              : "bg-[#d8b86f] text-[#2e1214]",
+          )}
+        >
+          {stateLabel}
         </span>
       ) : null}
     </div>
@@ -560,17 +585,17 @@ function ViewerColorCallout({
         "flex items-center gap-2 rounded-xl border font-semibold shadow-lg",
         compact ? "shrink-0 px-3 py-2.5 text-xs" : "w-full px-3 py-3 text-sm",
         color === "ivory"
-          ? "border-[#f5e7ca] bg-[#eadabd] text-[#3c2817]"
-          : "border-[#e17086]/45 bg-[#8f1c35] text-[#fff0df]",
+          ? "border-[#8a763e] bg-[#1d1a17] text-[#f0e4c5]"
+          : "border-[#6e2b3b] bg-[#1d1719] text-[#f0dfe2]",
       )}
     >
       <span
         aria-hidden="true"
         className={cn(
-          "size-3 shrink-0 rounded-full border shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_0_8px_rgba(0,0,0,0.25)]",
+          "size-3 shrink-0 rounded-full border",
           color === "ivory"
-            ? "border-[#a98b59] bg-[#eadabd]"
-            : "border-[#dc8a78]/55 bg-[#8f1c35]",
+            ? "border-[var(--game-gold)] bg-[var(--game-piece-yellow)]"
+            : "border-[var(--game-gold)] bg-[var(--game-piece-burgundy)]",
         )}
       />
       <span>You are {colorName(color)}</span>
