@@ -47,9 +47,9 @@ const marbleTexturePositions = coordinates.map((_, index) => {
 });
 
 const lightMarbleTile =
-  "bg-[#e7e3dc] before:bg-[url('/textures/board-marble-white.svg')] before:opacity-[0.92]";
+  "bg-[#e7e3dc] before:bg-[url('/textures/board-marble-white.svg')] before:opacity-[0.72]";
 const darkMarbleTile =
-  "bg-[#151515] before:bg-[url('/textures/board-marble-black.svg')] before:opacity-[0.94]";
+  "bg-[#151515] before:bg-[url('/textures/board-marble-black.svg')] before:opacity-[0.76]";
 const royalGoldCrown = "text-[#d5a62e]";
 const metallicGoldGradient =
   "conic-gradient(from 210deg, #5d3004 0deg, #bd7d16 38deg, #ffe895 72deg, #a65e09 116deg, #f7d15d 166deg, #754008 214deg, #d99a27 264deg, #fff0a3 315deg, #5d3004 360deg)";
@@ -61,9 +61,9 @@ function PieceCrown({ color }: { color: PlayerColor }) {
   return (
     <svg
       aria-hidden="true"
-      className="size-[52%] drop-shadow-[0_1px_1px_rgba(60,31,3,0.72)]"
-      viewBox="0 0 24 24"
-      fill={onIvoryPiece ? "#f4e7cf" : "#741426"}
+      className="size-[48%]"
+      viewBox="0 2 24 17"
+      fill={onIvoryPiece ? "#936309" : "#741426"}
       stroke={`url(#${gradientId})`}
       strokeWidth={1.9}
       strokeLinecap="round"
@@ -92,31 +92,30 @@ function PieceCrown({ color }: { color: PlayerColor }) {
         </linearGradient>
       </defs>
       <path d="M4.3 16.5 3 6.5l5 4L12 4l4 6.5 5-4-1.3 10H4.3Z" />
-      <path d="M5 16.5h14v3H5Z" />
     </svg>
   );
 }
 
 function Piece({ piece, selected }: { piece: GamePiece; selected: boolean }) {
+  const faceColor = piece.color === "ivory" ? "#e6c83e" : "#741426";
+
   return (
     <span
       style={{ backgroundImage: metallicGoldGradient }}
       className={cn(
-        "relative grid size-[74%] place-items-center rounded-full p-[6%] transition-transform duration-200",
-        "shadow-[0_8px_14px_rgba(23,3,7,0.46),inset_0_2px_2px_rgba(255,247,184,0.9),inset_0_-3px_4px_rgba(82,39,1,0.72)]",
+        "relative grid size-[74%] place-items-center rounded-full p-[4%] transition-transform duration-200",
+        "shadow-[0_5px_9px_rgba(23,3,7,0.38),inset_0_2px_2px_rgba(255,247,184,0.72),inset_0_-2px_3px_rgba(82,39,1,0.58)]",
         selected &&
           "scale-110 ring-4 ring-[#ffe29b] ring-offset-2 ring-offset-[#7d1830]",
       )}
     >
       <span
-        className={cn(
-          "relative grid size-full place-items-center rounded-full border border-[#4b2805]/75",
-          piece.kind !== "captain" &&
-            "shadow-[inset_0_3px_5px_rgba(255,255,255,0.38),inset_0_-4px_8px_rgba(0,0,0,0.4),0_1px_0_rgba(255,240,169,0.58)]",
-          piece.color === "ivory"
-            ? "bg-[radial-gradient(circle_at_35%_28%,#fffdf6_0%,#ead9ba_56%,#a98b5c_100%)]"
-            : "bg-[radial-gradient(circle_at_35%_28%,#c34351_0%,#741426_50%,#2c0610_100%)]",
-        )}
+        style={{
+          backgroundColor: faceColor,
+          backgroundImage:
+            "radial-gradient(ellipse 74% 68% at 50% 45%, transparent 52%, rgba(0, 0, 0, 0.18) 72%, rgba(0, 0, 0, 0.72) 100%)",
+        }}
+        className="relative grid size-full place-items-center rounded-full"
       >
         {piece.kind === "captain" ? <PieceCrown color={piece.color} /> : null}
       </span>
@@ -248,12 +247,12 @@ export function GameBoard({
     <div className="relative z-10 w-full max-w-[720px] touch-manipulation select-none">
       <div
         style={{ backgroundImage: metallicGoldGradient }}
-        className="absolute -inset-2 rounded-[2rem] shadow-[0_32px_80px_rgba(0,0,0,0.55)] sm:-inset-3"
+        className="absolute -inset-2 rounded-[2rem] shadow-[0_20px_52px_rgba(0,0,0,0.45)] sm:-inset-3"
       />
-      <div className="absolute -inset-1 rounded-[1.6rem] border border-[#f2d693]/40 bg-[#3c150e] shadow-[inset_0_0_24px_rgba(0,0,0,0.8)] sm:-inset-2" />
+      <div className="absolute -inset-1 rounded-[1.6rem] border border-[#f2d693]/35 bg-[#3c150e] shadow-[inset_0_0_16px_rgba(0,0,0,0.68)] sm:-inset-2" />
       <fieldset
         aria-label="SEZE game board"
-        className="relative grid min-w-0 aspect-square grid-cols-8 overflow-hidden rounded-[1.25rem] border border-[#eac779]/25 bg-[#2a070d] p-1 shadow-[inset_0_0_40px_rgba(20,0,4,0.7)] sm:p-2"
+        className="relative grid min-w-0 aspect-square grid-cols-8 overflow-hidden rounded-[1.25rem] border border-[#eac779]/20 bg-[#2a070d] p-1 shadow-[inset_0_0_28px_rgba(20,0,4,0.58)] sm:p-2"
       >
         {displayCoordinates.map((coordinate, displayIndex) => {
           const playable = isPlayableCell(coordinate);
@@ -317,12 +316,12 @@ export function GameBoard({
             >
               {center ? (
                 <Crown
-                  className={cn("absolute size-[34%]", royalGoldCrown)}
+                  className={cn("absolute size-[29%]", royalGoldCrown)}
                   strokeWidth={1.9}
                 />
               ) : null}
               {power ? (
-                <span className="absolute grid size-[44%] place-items-center">
+                <span className="absolute grid size-[39%] place-items-center">
                   <BoardPowerIcon
                     power={power}
                     gradientId={`board-power-${coordinate.row}-${coordinate.col}`}

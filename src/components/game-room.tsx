@@ -429,7 +429,7 @@ function FinishedGameActions({
 }
 
 function colorName(color: PlayerColor) {
-  return color === "ivory" ? "Ivory" : "Burgundy";
+  return color === "ivory" ? "Yellow" : "Burgundy";
 }
 
 function otherColor(color: PlayerColor): PlayerColor {
@@ -470,9 +470,9 @@ function BoardPlayerBar({
           ? "rounded-t-xl rounded-b-none pt-2 pb-4"
           : "rounded-t-none rounded-b-xl pt-4 pb-2",
         active && color === "ivory"
-          ? "border-[#f1dfbd] bg-[#e8d7b8] text-[#3a2818] shadow-[0_8px_28px_rgba(225,199,143,0.18)]"
+          ? "border-[#cdbb99] bg-[#d8c9ad] text-[#3a2818] shadow-[0_5px_18px_rgba(225,199,143,0.1)]"
           : active && color === "burgundy"
-            ? "border-[#e25b76] bg-[#8f1c35] text-[#fff0df] shadow-[0_8px_28px_rgba(142,24,52,0.28)]"
+            ? "border-[#a84a60] bg-[#64172a] text-[#f4e5d4] shadow-[0_5px_18px_rgba(100,23,42,0.16)]"
             : winner
               ? "border-[#d8b86f]/60 bg-[#d8b86f]/14 text-[#f2e5cd]"
               : "border-[#d6b46c]/14 bg-[#160a0c]/72 text-[#ddccb0]",
@@ -483,7 +483,7 @@ function BoardPlayerBar({
         className={cn(
           "size-8 shrink-0 rounded-full border shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),inset_0_-3px_5px_rgba(0,0,0,0.3)]",
           color === "ivory"
-            ? "border-[#9e8153] bg-[#f2e4c9]"
+            ? "border-black/70 bg-[#e6c83e]"
             : "border-[#d17078]/55 bg-[#75152b]",
           active && "ring-2 ring-current/35 ring-offset-2 ring-offset-inherit",
         )}
