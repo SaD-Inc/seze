@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <filter id="stone" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="3" seed="31" result="grain"/>
+      <feColorMatrix in="grain" type="saturate" values="0" result="gray-grain"/>
+      <feComponentTransfer in="gray-grain" result="soft-grain">
+        <feFuncA type="table" tableValues="0 0.085"/>
+      </feComponentTransfer>
+      <feBlend in="SourceGraphic" in2="soft-grain" mode="screen"/>
+    </filter>
+    <filter id="warp" x="-18%" y="-18%" width="136%" height="136%" filterUnits="objectBoundingBox">
+      <feTurbulence type="fractalNoise" baseFrequency="0.007 0.024" numOctaves="3" seed="19" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="42" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="soften" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#111214"/>
+  <rect width="1024" height="1024" fill="#202226" opacity="0.38" filter="url(#stone)"/>
+
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#warp)">
+    <g stroke="#d9dadd" opacity="0.16" filter="url(#soften)">
+      <path d="M-90 154 C130 70 192 278 388 201 S690 21 1112 121" stroke-width="18"/>
+      <path d="M-75 802 C177 635 305 846 506 708 S777 533 1101 617" stroke-width="15"/>
+      <path d="M197-92 C255 138 116 262 291 425 S550 684 470 1116" stroke-width="12"/>
+    </g>
+
+    <g stroke="#eef0f2">
+      <path d="M-90 154 C130 70 192 278 388 201 S690 21 1112 121" stroke-width="5.5" opacity="0.82"/>
+      <path d="M-75 802 C177 635 305 846 506 708 S777 533 1101 617" stroke-width="4.5" opacity="0.68"/>
+      <path d="M197-92 C255 138 116 262 291 425 S550 684 470 1116" stroke-width="3.4" opacity="0.52"/>
+      <path d="M382 199 C423 285 370 345 292 425" stroke-width="2.2" opacity="0.56"/>
+      <path d="M505 708 C605 763 649 882 612 1091" stroke-width="2.1" opacity="0.48"/>
+      <path d="M700 96 C765 228 735 331 883 425 S1007 516 1095 533" stroke-width="2.4" opacity="0.58"/>
+      <path d="M11 503 C178 451 236 551 388 525 S624 367 725 337" stroke-width="1.8" opacity="0.34"/>
+      <path d="M170 718 C125 608 142 541 11 503" stroke-width="1.6" opacity="0.32"/>
+    </g>
+
+    <g stroke="#8f9399" opacity="0.42">
+      <path d="M-34 349 C150 304 285 380 449 309 S741 190 1046 271" stroke-width="1.3"/>
+      <path d="M18 934 C236 854 340 973 552 887 S810 778 1065 873" stroke-width="1.5"/>
+      <path d="M832-48 C777 128 873 244 824 396 S680 702 791 1077" stroke-width="1.2"/>
+    </g>
+  </g>
+</svg>

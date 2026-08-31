@@ -230,10 +230,11 @@ export function GameRoom({
 
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_290px] lg:items-center lg:gap-8">
         <section className="flex min-h-0 items-start justify-center px-1 py-2 sm:px-8 sm:py-4 lg:min-h-[calc(100vh-6rem)] lg:items-center lg:py-6">
-          <div className="relative w-[min(100%,calc(100svh-15rem))] max-w-[720px] space-y-2.5 sm:space-y-3">
+          <div className="relative flex w-[min(100%,calc(100svh-15rem))] max-w-[720px] flex-col">
             <BoardPlayerBar
               game={game}
               color={otherColor(game.viewerColor ?? "ivory")}
+              placement="top"
             />
             <GameBoard
               state={game.state}
@@ -241,7 +242,11 @@ export function GameRoom({
               disabled={game.status !== "active" || move.isPending}
               onMove={makeGameMove}
             />
-            <BoardPlayerBar game={game} color={game.viewerColor ?? "ivory"} />
+            <BoardPlayerBar
+              game={game}
+              color={game.viewerColor ?? "ivory"}
+              placement="bottom"
+            />
             {game.status === "finished" ? (
               <div className="absolute -inset-2 z-30 grid place-items-center rounded-[2rem] bg-black/48 p-4 backdrop-blur-[2px] sm:-inset-4">
                 <FinishedGameActions
@@ -434,9 +439,11 @@ function otherColor(color: PlayerColor): PlayerColor {
 function BoardPlayerBar({
   game,
   color,
+  placement,
 }: {
   game: PublicGame;
   color: PlayerColor;
+  placement: "top" | "bottom";
 }) {
   const player = game.players.find((candidate) => candidate.color === color);
   const pieces = game.state.pieces.filter(
@@ -458,7 +465,10 @@ function BoardPlayerBar({
       role={active ? "status" : undefined}
       aria-live={active ? "polite" : undefined}
       className={cn(
-        "flex min-h-12 items-center gap-3 rounded-xl border px-3 py-2 transition-colors",
+        "relative z-0 flex min-h-14 items-center gap-3 border px-3 transition-colors",
+        placement === "top"
+          ? "rounded-t-xl rounded-b-none pt-2 pb-4"
+          : "rounded-t-none rounded-b-xl pt-4 pb-2",
         active && color === "ivory"
           ? "border-[#f1dfbd] bg-[#e8d7b8] text-[#3a2818] shadow-[0_8px_28px_rgba(225,199,143,0.18)]"
           : active && color === "burgundy"
