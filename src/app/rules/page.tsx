@@ -7,6 +7,7 @@ import {
   Focus,
   Plus,
   Shield,
+  Trophy,
   Users,
 } from "lucide-react";
 import type { Metadata } from "next";
@@ -14,6 +15,7 @@ import Link from "next/link";
 
 import { Brand } from "~/components/brand";
 import { JsonLd } from "~/components/json-ld";
+import { ProjectDisclaimer } from "~/components/project-disclaimer";
 import {
   BossMoveVisual,
   CaptureVisual,
@@ -28,7 +30,7 @@ import { rulesStructuredData } from "~/lib/structured-data";
 
 const title = "How to Play SE!ZE — Rules, Moves & Ways to Win";
 const description =
-  "Learn how to play SE!ZE: set up all 16 pieces, move guards and bosses, make sandwich captures, use power spaces, and master all three ways to win.";
+  "Learn how to play SE!ZE: move guards and bosses, capture in straight or diagonal sandwiches, use three cap powers, score captures, and master all three ways to win.";
 
 export const metadata: Metadata = {
   title: { absolute: title },
@@ -104,8 +106,8 @@ export default function RulesPage() {
             </span>
           </h1>
           <p className="mx-auto mt-7 max-w-2xl text-balance text-lg leading-8 text-[#c7b59e]">
-            Two players alternate one move at a time. Control space, create a
-            trap, and pursue any of three paths to victory.
+            Red moves first, then players alternate one move at a time. Control
+            space, create a trap, and pursue any of three paths to victory.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3 text-sm text-[#aa9a84]">
             <span className="inline-flex items-center gap-2 rounded-full border border-[#d5b46b]/15 bg-black/10 px-3 py-2">
@@ -120,7 +122,7 @@ export default function RulesPage() {
           </div>
           <p className="mt-6 text-xs text-[#8f816e]">
             <time dateTime={siteConfig.contentLastModified}>
-              Last reviewed 28 August 2026
+              Last reviewed 1 September 2026
             </time>
           </p>
         </section>
@@ -140,14 +142,18 @@ export default function RulesPage() {
                 two crowned bosses.
               </p>
               <p>
-                All 16 pieces fill the central 4×4: Yellow takes the upper two
-                rows and Burgundy the lower two. Eight bare power pieces sit on
-                the perimeter—four + and four ×, one of each per side.
+                All 16 pieces fill the central 4×4: Gold takes the upper two
+                rows and Red the lower two. The perimeter has four + and four ×
+                power spaces; the four center markers are crown spaces.
+              </p>
+              <p>
+                The physical cap supply contains eight pluses, eight pyramids,
+                and eight crowns. Red takes the first turn.
               </p>
             </div>
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
               <Legend icon={<Shield />} title="Guard">
-                One orthogonal space
+                One space in any direction
               </Legend>
               <Legend icon={<Crown />} title="Boss">
                 Up to two spaces in any direction
@@ -173,7 +179,7 @@ export default function RulesPage() {
             <RuleCard
               number="01"
               title="Guards step one"
-              description="A guard moves one open square up, down, left, or right. Diagonal movement needs a power."
+              description="A guard moves one open square horizontally, vertically, or diagonally."
             >
               <GuardMoveVisual />
             </RuleCard>
@@ -187,14 +193,14 @@ export default function RulesPage() {
             <RuleCard
               number="03"
               title="Make the sandwich"
-              description="End a move with an enemy directly between the moved piece and another friendly piece. The trapped piece leaves the board."
+              description="Complete a horizontal, vertical, or diagonal sandwich with the piece you moved. Moving into an existing trap does not cause a capture."
             >
               <CaptureVisual />
             </RuleCard>
             <RuleCard
               number="04"
-              title="Attach a power"
-              description="A guard landing on + gains attached rook-like movement. Landing on × grants attached bishop-like movement."
+              title="Attach a cap"
+              description="A guard on + gains long rook-like lines, × grants a pyramid cap for long diagonals, and a center marker grants a crown that promotes it to a boss."
             >
               <PowerMoveVisual />
             </RuleCard>
@@ -213,11 +219,28 @@ export default function RulesPage() {
               Occupy all four marked center cells with your own pieces.
             </WinCard>
             <WinCard icon={<Crown />} number="02" title="Take the bosses">
-              Capture both opposing bosses through sandwich traps.
+              Capture every opposing boss through sandwich traps. Each side
+              begins with two, but center promotion can add more.
             </WinCard>
             <WinCard icon={<Shield />} number="03" title="Break the force">
               Reduce the opponent to only two remaining pieces.
             </WinCard>
+          </div>
+          <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-[#d5b46b]/16 bg-[#180b0d]/72 p-6 text-[#a99a86] sm:flex-row sm:items-center sm:p-7">
+            <span className="grid size-11 shrink-0 place-items-center rounded-full border border-[#d7b66d]/20 bg-[#8a1730]/25 text-[#e2bd72]">
+              <Trophy className="size-5" />
+            </span>
+            <div>
+              <h3 className="font-serif text-2xl text-[#f2dfbf]">
+                Keep score from the first capture
+              </h3>
+              <p className="mt-2 text-sm leading-6">
+                A plain guard is worth 1 point, a guard wearing a plus or
+                pyramid cap is worth 2, and any boss—including a guard promoted
+                with a crown—is worth 3. This online ruleset has no timer;
+                points are recorded alongside the three victory paths.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -228,10 +251,37 @@ export default function RulesPage() {
               Clear about what we know
             </h2>
             <p className="mt-5 max-w-2xl leading-7 text-[#bbaa93]">
-              A public gameplay explanation confirms 16 pieces, two bosses per
-              side, their central opening position, and all three win
-              conditions. A complete public rulebook has not been found.
+              A live rules recap confirms 16 pieces, Red moving first, all eight
+              one-step directions, boss movement, three cap types, straight and
+              diagonal captures, scoring, and all three win conditions.
             </p>
+            <div className="mt-8 border-s-2 border-[#d7b66d]/25 ps-5">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#d7b971]">
+                Original game design
+              </p>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#a99a86]">
+                SE!ZE was designed by British game designer{" "}
+                <a
+                  className="text-[#d9bc7e] underline decoration-[#d9bc7e]/35 underline-offset-4 transition-colors hover:text-[#ffe1a2]"
+                  href={siteConfig.gameCredits.designer.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {siteConfig.gameCredits.designer.name}
+                </a>{" "}
+                in collaboration with {siteConfig.gameCredits.collaborator} for
+                Baby Teeth and Chivas Regal. The{" "}
+                <a
+                  className="text-[#d9bc7e] underline decoration-[#d9bc7e]/35 underline-offset-4 transition-colors hover:text-[#ffe1a2]"
+                  href={siteConfig.gameCredits.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  original collaboration
+                </a>{" "}
+                is documented by Chivas Regal.
+              </p>
+            </div>
           </div>
           <div className="rounded-2xl border border-[#d5b46b]/18 bg-[#1a0c0e]/75 p-6 shadow-xl sm:p-8">
             <div className="flex items-start gap-4">
@@ -243,11 +293,12 @@ export default function RulesPage() {
                   Rules note
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-[#b5a58f]">
-                  The 4×4 setup and eight +/× locations follow gameplay
-                  evidence. Diagonal boss movement and persistent attached
-                  powers are the current working interpretation while a complete
-                  rulebook remains unavailable. Every match records its rules
-                  version so revisions stay explicit.
+                  A guard that reaches a center marker takes a crown and becomes
+                  a boss. It is then worth 3 capture points and must be captured
+                  along with every other opposing boss for the boss-capture
+                  victory. The cap replacement and inventory lifecycle were not
+                  explained in the recap, so every match records its rules
+                  version for future corrections.
                 </p>
               </div>
             </div>
@@ -285,9 +336,9 @@ export default function RulesPage() {
         </section>
 
         <footer className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-[#d7b76f]/10 py-8 text-xs text-[#766b5d] sm:flex-row">
-          <p>SE!ZE · Learn the board, then take the center.</p>
+          <ProjectDisclaimer tagline="SE!ZE · Learn the board, then take the center." />
           <nav
-            className="flex items-center gap-5"
+            className="flex shrink-0 items-center gap-5"
             aria-label="Footer navigation"
           >
             <Link className="hover:text-[#c8ac75]" href="/">

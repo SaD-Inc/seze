@@ -1,6 +1,6 @@
 # Roadmap
 
-Updated: 2026-08-28
+Updated: 2026-09-01
 
 ## Now — public web MVP
 
@@ -28,7 +28,9 @@ Updated: 2026-08-28
 - [x] evidence-corrected central 4×4 opening with Ivory above Burgundy
 - [x] eight literal `+`/`×` perimeter powers with persistent guard attachments
 - [x] one- or two-square orthogonal and diagonal boss movement
-- [x] ruleset `prototype-0.2` with legacy `prototype-0.1` replay compatibility
+- [x] livestream-confirmed Red-first turn order, eight-direction guard movement,
+      diagonal sandwich captures, crown promotion, and capture scoring
+- [x] ruleset `prototype-0.3` with a clean match reset
 
 ## Next — validate the game
 
@@ -55,5 +57,5 @@ Updated: 2026-08-28
 - Versioned matches keep future rules revisions isolated
 - Visual rules examples use CSS animation with a reduced-motion fallback and
   share opening-position data with the live rules engine
-- Crowns and pyramids stay out of the playable rules until their effects are
-  understood
+- The no-timer web game tracks the livestream point values from the first
+  capture without making score a separate victory condition

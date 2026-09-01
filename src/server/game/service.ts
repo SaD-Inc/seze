@@ -73,9 +73,17 @@ async function publicGameFrom(
   const viewer = viewerHash
     ? players.find((candidate) => candidate.tokenHash === viewerHash)
     : undefined;
+  const [rematchGame] = game.rematchCode
+    ? await db
+        .select({ analyticsMatchId: games.analyticsMatchId })
+        .from(games)
+        .where(eq(games.code, game.rematchCode))
+        .limit(1)
+    : [];
 
   return {
     code: game.code,
+    analyticsMatchId: game.analyticsMatchId,
     status: game.status,
     version: game.version,
     state: game.state,
@@ -85,6 +93,7 @@ async function publicGameFrom(
       ? {
           requestedBy: game.rematchRequestedBy,
           gameCode: game.rematchCode,
+          analyticsMatchId: rematchGame?.analyticsMatchId ?? null,
         }
       : null,
     createdAt: game.createdAt,
@@ -159,7 +168,7 @@ export async function createGame(
 
     await tx.insert(gamePlayers).values({
       gameId: game.id,
-      color: "ivory",
+      color: "burgundy",
       displayName: normalizeName(displayName),
       tokenHash: tokenHash(token),
     });
@@ -196,7 +205,7 @@ export async function joinGame(
 
     await tx.insert(gamePlayers).values({
       gameId: game.id,
-      color: "burgundy",
+      color: "ivory",
       displayName: normalizeName(displayName),
       tokenHash: tokenHash(token),
     });

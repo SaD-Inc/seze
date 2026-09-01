@@ -18,6 +18,7 @@ import type {
   GamePiece,
   GameState,
   PlayerColor,
+  PowerType,
 } from "~/game/types";
 import { cn } from "~/lib/utils";
 
@@ -40,7 +41,13 @@ const reversedCoordinates = [...coordinates].reverse();
 const lightBoardTile = "bg-[var(--game-tile-light)]";
 const darkBoardTile = "bg-[var(--game-tile-dark)]";
 const displayColor = (color: PlayerColor) =>
-  color === "ivory" ? "yellow" : "burgundy";
+  color === "ivory" ? "gold" : "red";
+
+function powerName(power: PowerType): string {
+  if (power === "rook") return "plus rook";
+  if (power === "bishop") return "pyramid diagonal";
+  return "crown boss";
+}
 
 function Piece({ piece, selected }: { piece: GamePiece; selected: boolean }) {
   return (
@@ -59,10 +66,10 @@ function BoardPowerIcon({
   power,
   tileTone,
 }: {
-  power: "rook" | "bishop";
+  power: PowerType;
   tileTone: "light" | "dark";
 }) {
-  const Icon = power === "rook" ? Plus : X;
+  const Icon = power === "rook" ? Plus : power === "bishop" ? X : Crown;
 
   return (
     <Icon
@@ -87,10 +94,7 @@ export function GameBoard({
     pieceId: string | null;
     moveNumber: number;
   }>({ pieceId: null, moveNumber: state.moveNumber });
-  const isFlipped =
-    state.rulesetVersion === "prototype-0.1"
-      ? viewerColor === "burgundy"
-      : viewerColor === "ivory";
+  const isFlipped = viewerColor === "ivory";
 
   const selectedId =
     selection.moveNumber === state.moveNumber ? selection.pieceId : null;
@@ -143,7 +147,7 @@ export function GameBoard({
           const playable = isPlayableCell(coordinate);
           const piece = pieceByCoordinate.get(coordinateKey(coordinate));
           const center = isCenterCell(coordinate);
-          const power = powerAt(coordinate, state.rulesetVersion);
+          const power = powerAt(coordinate);
           const legal = legalKeys.has(coordinateKey(coordinate));
           const selected = piece?.id === selectedId;
           const lastFrom = state.lastMove
@@ -157,13 +161,11 @@ export function GameBoard({
           const cellDetails = [
             `Row ${coordinate.row + 1}, column ${coordinate.col + 1}`,
             center ? "center space" : null,
-            power
-              ? `${power === "rook" ? "plus" : "cross"} ${power} power space`
-              : null,
+            power ? `${powerName(power)} power space` : null,
             piece
               ? `${displayColor(piece.color)} ${piece.kind}${
                   piece.power
-                    ? ` with attached ${piece.power === "rook" ? "plus rook" : "cross bishop"} power`
+                    ? ` with attached ${powerName(piece.power)} cap`
                     : ""
                 }`
               : "empty",
@@ -204,7 +206,7 @@ export function GameBoard({
                   strokeWidth={2}
                 />
               ) : null}
-              {power ? (
+              {power && power !== "boss" ? (
                 <span className="absolute grid size-[34%] place-items-center">
                   <BoardPowerIcon
                     power={power}

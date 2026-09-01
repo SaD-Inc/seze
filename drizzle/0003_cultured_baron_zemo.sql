@@ -1,0 +1,2 @@
+ALTER TABLE "seze_game" ADD COLUMN "analyticsMatchId" uuid DEFAULT gen_random_uuid() NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "game_analytics_match_id_unique" ON "seze_game" USING btree ("analyticsMatchId");

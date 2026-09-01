@@ -24,6 +24,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import type { PlayerColor, PublicGame, WinReason } from "~/game/types";
+import {
+  analyticsErrorCode,
+  captureAnalyticsEvent,
+  captureAnalyticsEventOnce,
+} from "~/lib/analytics";
 import { quickJoinUrl } from "~/lib/game-links";
 import {
   advanceSoundedMove,
@@ -42,7 +47,7 @@ import { api } from "~/trpc/react";
 
 const winCopy: Record<WinReason, string> = {
   center: "seized all four central spaces",
-  captains: "captured both opposing bosses",
+  bosses: "captured every opposing boss",
   pieces: "reduced the opposition to two pieces",
 };
 
@@ -124,14 +129,53 @@ export function GameRoom({
 
   const join = api.game.join.useMutation({
     onSuccess: ({ game, token: newToken }, variables) => {
+      captureAnalyticsEvent("second player joined", {
+        join_method: quickJoin ? "quick_link" : "manual_code",
+        match_id: game.analyticsMatchId,
+        ruleset_version: game.state.rulesetVersion,
+      });
       storePlayerToken(game.code, newToken, variables.displayName.trim());
       setToken(newToken);
       utils.game.get.setData({ code: normalizedCode, token: newToken }, game);
     },
+    onError: (error) => {
+      captureAnalyticsEvent("table join failed", {
+        join_method: quickJoin ? "quick_link" : "manual_code",
+        error_code: analyticsErrorCode(error),
+      });
+    },
   });
 
   const move = api.game.move.useMutation({
-    onSuccess: (game) => utils.game.get.setData(queryInput, game),
+    onSuccess: (game) => {
+      utils.game.get.setData(queryInput, game);
+
+      if (game.viewerColor && game.state.moveNumber === 1) {
+        captureAnalyticsEventOnce(
+          "game first move made",
+          game.analyticsMatchId,
+          {
+            match_id: game.analyticsMatchId,
+            player_color: game.viewerColor,
+            ruleset_version: game.state.rulesetVersion,
+          },
+        );
+      }
+
+      if (
+        game.status === "finished" &&
+        game.viewerColor &&
+        game.state.winReason
+      ) {
+        captureAnalyticsEventOnce("game completed", game.analyticsMatchId, {
+          match_id: game.analyticsMatchId,
+          move_count: game.state.moveNumber,
+          player_color: game.viewerColor,
+          ruleset_version: game.state.rulesetVersion,
+          win_reason: game.state.winReason,
+        });
+      }
+    },
     onError: (error) => {
       toast.error(error.message);
       void gameQuery.refetch();
@@ -140,17 +184,51 @@ export function GameRoom({
 
   const createAnother = api.game.create.useMutation({
     onSuccess: ({ game: newGame, token: newToken }, variables) => {
+      captureAnalyticsEvent("table created", {
+        entry_point: "game_over",
+        match_id: newGame.analyticsMatchId,
+        ruleset_version: newGame.state.rulesetVersion,
+      });
       storePlayerToken(newGame.code, newToken, variables.displayName);
       router.push(`/game/${newGame.code}`);
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => {
+      captureAnalyticsEvent("table create failed", {
+        entry_point: "game_over",
+        error_code: analyticsErrorCode(error),
+      });
+      toast.error(error.message);
+    },
   });
 
   const rematch = api.game.rematch.useMutation({
     onSuccess: (updatedGame) => {
       utils.game.get.setData(queryInput, updatedGame);
+
+      const rematchCreated = Boolean(updatedGame.rematch?.gameCode);
+      captureAnalyticsEventOnce(
+        "rematch requested",
+        updatedGame.analyticsMatchId,
+        {
+          match_id: updatedGame.analyticsMatchId,
+          request_type: rematchCreated ? "accepted" : "initiated",
+        },
+      );
+
+      const rematchMatchId = updatedGame.rematch?.analyticsMatchId;
+      if (rematchCreated && rematchMatchId) {
+        captureAnalyticsEventOnce("rematch created", rematchMatchId, {
+          match_id: rematchMatchId,
+          ruleset_version: updatedGame.state.rulesetVersion,
+        });
+      }
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => {
+      captureAnalyticsEvent("rematch request failed", {
+        error_code: analyticsErrorCode(error),
+      });
+      toast.error(error.message);
+    },
   });
 
   if (!tokenLoaded || gameQuery.isLoading) return <GameLoading />;
@@ -189,6 +267,9 @@ export function GameRoom({
   function submitJoin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (resolvedJoinName.length >= 2) {
+      captureAnalyticsEvent("table join intent", {
+        join_method: quickJoin ? "quick_link" : "manual_code",
+      });
       join.mutate({ code: normalizedCode, displayName: resolvedJoinName });
     }
   }
@@ -200,10 +281,21 @@ export function GameRoom({
   }
 
   async function copyInvite() {
-    await navigator.clipboard.writeText(
-      quickJoinUrl(window.location.origin, normalizedCode),
-    );
-    toast.success("Quick-join link copied");
+    try {
+      await navigator.clipboard.writeText(
+        quickJoinUrl(window.location.origin, normalizedCode),
+      );
+      captureAnalyticsEventOnce("invite copied", game.analyticsMatchId, {
+        match_id: game.analyticsMatchId,
+        share_method: "clipboard",
+      });
+      toast.success("Quick-join link copied");
+    } catch {
+      captureAnalyticsEventOnce("invite copy failed", game.analyticsMatchId, {
+        share_method: "clipboard",
+      });
+      toast.error("Could not copy the quick-join link");
+    }
   }
 
   function startAnotherGame() {
@@ -211,6 +303,9 @@ export function GameRoom({
       router.push("/");
       return;
     }
+    captureAnalyticsEvent("table create intent", {
+      entry_point: "game_over",
+    });
     createAnother.mutate({ displayName: viewerName });
   }
 
@@ -303,7 +398,7 @@ export function GameRoom({
                   Waiting for an opponent
                 </CardTitle>
                 <p className="text-sm leading-6 text-[#b9a78e]">
-                  Share this table. The game starts as soon as Burgundy joins.
+                  Share this table. The game starts as soon as Gold joins.
                 </p>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -403,6 +498,10 @@ function FinishedGameActions({
                 ? `${winCopy[game.state.winReason]}.`
                 : "Play again or review the game."}
         </p>
+        <p className="text-xs tabular-nums text-[#d0b276]">
+          Final score · Red {game.state.scores.burgundy} · Gold{" "}
+          {game.state.scores.ivory}
+        </p>
       </CardHeader>
       <CardContent className="space-y-3">
         {viewerName ? (
@@ -456,7 +555,7 @@ function FinishedGameActions({
 }
 
 function colorName(color: PlayerColor) {
-  return color === "ivory" ? "Yellow" : "Burgundy";
+  return color === "ivory" ? "Gold" : "Red";
 }
 
 function otherColor(color: PlayerColor): PlayerColor {
@@ -476,6 +575,7 @@ function BoardPlayerBar({
   const pieces = game.state.pieces.filter(
     (piece) => piece.color === color,
   ).length;
+  const score = game.state.scores?.[color] ?? 0;
   const viewer = game.viewerColor === color;
   const active = game.status === "active" && game.state.turn === color;
   const winner = game.state.winner === color;
@@ -524,7 +624,9 @@ function BoardPlayerBar({
           ) : null}
         </div>
       </div>
-      <span className="text-xs tabular-nums opacity-65">{pieces}/8</span>
+      <span className="text-xs tabular-nums opacity-65">
+        {pieces}/8 · {score} pts
+      </span>
       {stateLabel ? (
         <span
           className={cn(
@@ -658,7 +760,7 @@ function JoinTableGate({
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
-              <ViewerColorCallout color="burgundy" />
+              <ViewerColorCallout color="ivory" />
               <form className="space-y-4" onSubmit={onSubmit}>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-3">

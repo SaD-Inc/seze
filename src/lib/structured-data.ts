@@ -15,6 +15,17 @@ const gameEntity = {
   gamePlatform: "Web browser",
   operatingSystem: "Any",
   playMode: "MultiPlayer",
+  creator: [
+    {
+      "@type": "Person",
+      name: siteConfig.gameCredits.designer.name,
+      url: siteConfig.gameCredits.designer.url,
+    },
+    {
+      "@type": "Person",
+      name: siteConfig.gameCredits.collaborator,
+    },
+  ],
   numberOfPlayers: {
     "@type": "QuantitativeValue",
     minValue: 2,
@@ -28,7 +39,6 @@ const gameEntity = {
     priceCurrency: "USD",
     availability: "https://schema.org/InStock",
   },
-  sameAs: siteConfig.sameAs,
 };
 
 const websiteEntity = {
@@ -39,13 +49,18 @@ const websiteEntity = {
   url: siteConfig.url,
   description: siteConfig.description,
   inLanguage: siteConfig.language,
+  creator: {
+    "@type": "Person",
+    name: siteConfig.websiteCreator.name,
+    url: siteConfig.websiteCreator.url,
+  },
 };
 
 export const homeFaq = [
   {
     question: "What is SE!ZE?",
     answer:
-      "SE!ZE is a two-player abstract strategy board game. Players move and capture pieces while competing to control the four marked center spaces, capture both opposing bosses, or reduce the opposing force to two pieces.",
+      "SE!ZE is a two-player abstract strategy board game. Players move and capture pieces while competing to control the four marked center spaces, capture every opposing boss, or reduce the opposing force to two pieces.",
   },
   {
     question: "Can I play SE!ZE online for free?",
@@ -60,7 +75,7 @@ export const homeFaq = [
   {
     question: "How do you win a game of SE!ZE?",
     answer:
-      "Win by occupying all four marked center spaces, capturing both opposing bosses, or reducing the opponent to two remaining pieces.",
+      "Win by occupying all four marked center spaces, capturing every opposing boss, or reducing the opponent to two remaining pieces.",
   },
 ] as const;
 
@@ -107,7 +122,7 @@ export const rulesStructuredData = {
       url: `${siteConfig.url}/rules`,
       name: "How to play SE!ZE",
       description:
-        "SE!ZE rules for setup, guard and boss movement, captures, power spaces, and all three ways to win.",
+        "SE!ZE rules for Red-first play, guard and boss movement, straight and diagonal captures, cap powers, scoring, and all three ways to win.",
       isPartOf: { "@id": websiteId },
       about: { "@id": gameId },
       inLanguage: siteConfig.language,

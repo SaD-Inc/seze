@@ -8,6 +8,7 @@ import {
   InvalidMoveError,
   isPlayableCell,
   powerAt,
+  scoreForCapturedPiece,
 } from "~/game/rules";
 import type { GamePiece, GameState } from "~/game/types";
 
@@ -26,7 +27,7 @@ function testState(
   pieces: GamePiece[],
   overrides: Partial<Omit<GameState, "pieces">> = {},
 ): GameState {
-  return { ...createInitialState(), ...overrides, pieces };
+  return { ...createInitialState(), turn: "ivory", ...overrides, pieces };
 }
 
 describe("SEZE board and setup", () => {
@@ -46,9 +47,10 @@ describe("SEZE board and setup", () => {
 
   test("starts each side with six guards, two bosses, and unique playable positions", () => {
     const state = createInitialState();
-    expect(state.rulesetVersion).toBe("prototype-0.2");
-    expect(state.turn).toBe("ivory");
+    expect(state.rulesetVersion).toBe("prototype-0.3");
+    expect(state.turn).toBe("burgundy");
     expect(state.moveNumber).toBe(0);
+    expect(state.scores).toEqual({ ivory: 0, burgundy: 0 });
     expect(state.winner).toBeNull();
     expect(new Set(state.pieces.map((piece) => piece.id)).size).toBe(16);
     expect(
@@ -60,9 +62,7 @@ describe("SEZE board and setup", () => {
       const pieces = state.pieces.filter((piece) => piece.color === color);
       expect(pieces).toHaveLength(8);
       expect(pieces.filter((piece) => piece.kind === "guard")).toHaveLength(6);
-      expect(pieces.filter((piece) => piece.kind === "captain")).toHaveLength(
-        2,
-      );
+      expect(pieces.filter((piece) => piece.kind === "boss")).toHaveLength(2);
     }
 
     expect(
@@ -72,7 +72,7 @@ describe("SEZE board and setup", () => {
             (piece) => piece.row === cell.row && piece.col === cell.col,
           )?.kind,
       ),
-    ).toEqual(["captain", "captain", "captain", "captain"]);
+    ).toEqual(["boss", "boss", "boss", "boss"]);
 
     expect(
       state.pieces
@@ -88,7 +88,7 @@ describe("SEZE board and setup", () => {
     ).toEqual(["4:2", "4:3", "4:4", "4:5", "5:2", "5:3", "5:4", "5:5"]);
   });
 
-  test("maps the eight alternating plus and cross power spaces", () => {
+  test("maps the perimeter caps and four center crown spaces", () => {
     expect(powerAt({ row: 0, col: 2 })).toBe("rook");
     expect(powerAt({ row: 0, col: 5 })).toBe("bishop");
     expect(powerAt({ row: 2, col: 7 })).toBe("rook");
@@ -97,21 +97,26 @@ describe("SEZE board and setup", () => {
     expect(powerAt({ row: 7, col: 2 })).toBe("bishop");
     expect(powerAt({ row: 5, col: 0 })).toBe("rook");
     expect(powerAt({ row: 2, col: 0 })).toBe("bishop");
-    expect(powerAt({ row: 3, col: 3 })).toBeNull();
+    expect(powerAt({ row: 3, col: 3 })).toBe("boss");
+    expect(powerAt({ row: 4, col: 4 })).toBe("boss");
   });
 });
 
 describe("SEZE movement", () => {
-  test("guards move one open orthogonal space", () => {
-    expect(getLegalMoves(createInitialState(), "i-g1")).toEqual([
-      { row: 1, col: 2 },
-      { row: 2, col: 1 },
+  test("guards move one open space in all eight directions", () => {
+    const state = testState([
+      gamePiece("i-g1", "ivory", "guard", 4, 4),
+      gamePiece("b-g1", "burgundy", "guard", 6, 6),
     ]);
+
+    expect(getLegalMoves(state, "i-g1")).toHaveLength(8);
+    expect(getLegalMoves(state, "i-g1")).toContainEqual({ row: 3, col: 3 });
+    expect(getLegalMoves(state, "i-g1")).toContainEqual({ row: 5, col: 5 });
   });
 
   test("bosses move one or two spaces orthogonally or diagonally without jumping blockers", () => {
     const state = testState([
-      gamePiece("i-c1", "ivory", "captain", 4, 4),
+      gamePiece("i-c1", "ivory", "boss", 4, 4),
       gamePiece("i-g1", "ivory", "guard", 2, 4),
       gamePiece("b-g1", "burgundy", "guard", 4, 2),
     ]);
@@ -139,6 +144,7 @@ describe("SEZE movement", () => {
     expect(rookMoves).toContainEqual({ row: 4, col: 5 });
     expect(rookMoves).not.toContainEqual({ row: 4, col: 6 });
     expect(rookMoves).not.toContainEqual({ row: 4, col: 7 });
+    expect(rookMoves).toContainEqual({ row: 3, col: 3 });
 
     const bishopState = testState([
       gamePiece("i-g1", "ivory", "guard", 4, 4, "bishop"),
@@ -149,23 +155,43 @@ describe("SEZE movement", () => {
     expect(bishopMoves).not.toContainEqual({ row: 2, col: 2 });
     expect(bishopMoves).not.toContainEqual({ row: 1, col: 1 });
     expect(bishopMoves).toContainEqual({ row: 7, col: 1 });
+    expect(bishopMoves).toContainEqual({ row: 4, col: 3 });
+  });
+
+  test("a guard landing in the center is promoted to a boss", () => {
+    const state = testState([
+      gamePiece("i-g1", "ivory", "guard", 4, 2),
+      gamePiece("b-c1", "burgundy", "boss", 0, 3),
+      gamePiece("b-c2", "burgundy", "boss", 0, 4),
+      gamePiece("b-g1", "burgundy", "guard", 6, 6),
+    ]);
+
+    const crowned = applyMove(state, "i-g1", { row: 3, col: 3 });
+    const promotedBoss = crowned.pieces.find((piece) => piece.id === "i-g1");
+    expect(promotedBoss).toMatchObject({ kind: "boss", power: "boss" });
+    if (!promotedBoss) throw new Error("Expected the guard to be promoted.");
+    expect(scoreForCapturedPiece(promotedBoss)).toBe(3);
+    expect(crowned.lastMove?.powerGranted).toBe("boss");
+
+    const bossMoves = getLegalMoves({ ...crowned, turn: "ivory" }, "i-g1");
+    expect(bossMoves).toContainEqual({ row: 1, col: 1 });
   });
 
   test("rejects missing pieces, the wrong turn, occupied targets, and illegal geometry", () => {
     const state = createInitialState();
     expect(getLegalMoves(state, "missing")).toEqual([]);
-    expect(getLegalMoves(state, "b-g1")).toEqual([]);
+    expect(getLegalMoves(state, "i-g1")).toEqual([]);
 
     expect(() => applyMove(state, "missing", { row: 4, col: 1 })).toThrow(
       "That piece is no longer on the board.",
     );
-    expect(() => applyMove(state, "b-g1", { row: 1, col: 1 })).toThrow(
+    expect(() => applyMove(state, "i-g1", { row: 1, col: 1 })).toThrow(
       "It is not that player's turn.",
     );
-    expect(() => applyMove(state, "i-g1", { row: 2, col: 3 })).toThrow(
+    expect(() => applyMove(state, "b-g1", { row: 5, col: 3 })).toThrow(
       "That move is not legal.",
     );
-    expect(() => applyMove(state, "i-g1", { row: 1, col: 1 })).toThrow(
+    expect(() => applyMove(state, "b-g1", { row: 3, col: 0 })).toThrow(
       "That move is not legal.",
     );
   });
@@ -173,11 +199,11 @@ describe("SEZE movement", () => {
   test("attaches a power on landing and keeps it on the guard", () => {
     const state = testState([
       gamePiece("i-g1", "ivory", "guard", 0, 1),
-      gamePiece("i-c1", "ivory", "captain", 7, 3),
-      gamePiece("i-c2", "ivory", "captain", 7, 4),
+      gamePiece("i-c1", "ivory", "boss", 7, 3),
+      gamePiece("i-c2", "ivory", "boss", 7, 4),
       gamePiece("b-g1", "burgundy", "guard", 5, 5),
-      gamePiece("b-c1", "burgundy", "captain", 0, 3),
-      gamePiece("b-c2", "burgundy", "captain", 0, 4),
+      gamePiece("b-c1", "burgundy", "boss", 0, 3),
+      gamePiece("b-c2", "burgundy", "boss", 0, 4),
     ]);
     const powered = applyMove(state, "i-g1", { row: 0, col: 2 });
     expect(powered.pieces.find((piece) => piece.id === "i-g1")?.power).toBe(
@@ -195,44 +221,8 @@ describe("SEZE movement", () => {
     expect(movedAgain.lastMove?.powerGranted).toBeNull();
   });
 
-  test("preserves movement and one-use powers for existing prototype-0.1 games", () => {
-    const legacy = createInitialState("prototype-0.1");
-    expect(legacy.pieces.find((piece) => piece.id === "i-g1")).toMatchObject({
-      row: 5,
-      col: 1,
-    });
-    expect(powerAt({ row: 1, col: 1 }, legacy.rulesetVersion)).toBe("bishop");
-
-    const legacyBossState = testState(
-      [gamePiece("i-c1", "ivory", "captain", 4, 4)],
-      { rulesetVersion: "prototype-0.1" },
-    );
-    expect(getLegalMoves(legacyBossState, "i-c1")).not.toContainEqual({
-      row: 3,
-      col: 3,
-    });
-
-    const legacyPowerState = testState(
-      [
-        gamePiece("i-g1", "ivory", "guard", 1, 2),
-        gamePiece("i-c1", "ivory", "captain", 7, 3),
-        gamePiece("i-c2", "ivory", "captain", 7, 4),
-        gamePiece("b-g1", "burgundy", "guard", 5, 5),
-        gamePiece("b-c1", "burgundy", "captain", 0, 3),
-        gamePiece("b-c2", "burgundy", "captain", 0, 4),
-      ],
-      { rulesetVersion: "prototype-0.1" },
-    );
-    const powered = applyMove(legacyPowerState, "i-g1", { row: 1, col: 1 });
-    const spent = applyMove({ ...powered, turn: "ivory" }, "i-g1", {
-      row: 3,
-      col: 3,
-    });
-    expect(spent.pieces.find((piece) => piece.id === "i-g1")?.power).toBeNull();
-  });
-
   test("produces a new state, move record, and opposing turn", () => {
-    const state = createInitialState();
+    const state = testState(createInitialState().pieces);
     const next = applyMove(state, "i-g1", { row: 1, col: 2 });
 
     expect(next).not.toBe(state);
@@ -248,6 +238,7 @@ describe("SEZE movement", () => {
       to: { row: 1, col: 2 },
       capturedPieceIds: [],
       powerGranted: null,
+      scoreEarned: 0,
     });
   });
 });
@@ -257,12 +248,12 @@ describe("SEZE capture and victory", () => {
     const state = testState([
       gamePiece("i-g1", "ivory", "guard", 3, 1),
       gamePiece("i-g2", "ivory", "guard", 3, 4),
-      gamePiece("i-c1", "ivory", "captain", 7, 3),
-      gamePiece("i-c2", "ivory", "captain", 7, 4),
+      gamePiece("i-c1", "ivory", "boss", 7, 3),
+      gamePiece("i-c2", "ivory", "boss", 7, 4),
       gamePiece("b-g1", "burgundy", "guard", 3, 3),
       gamePiece("b-g2", "burgundy", "guard", 5, 5),
-      gamePiece("b-c1", "burgundy", "captain", 0, 3),
-      gamePiece("b-c2", "burgundy", "captain", 0, 4),
+      gamePiece("b-c1", "burgundy", "boss", 0, 3),
+      gamePiece("b-c2", "burgundy", "boss", 0, 4),
     ]);
 
     const next = applyMove(state, "i-g1", { row: 3, col: 2 });
@@ -275,58 +266,80 @@ describe("SEZE capture and victory", () => {
       gamePiece("i-g1", "ivory", "guard", 2, 2),
       gamePiece("i-g2", "ivory", "guard", 0, 3),
       gamePiece("i-g3", "ivory", "guard", 2, 5),
-      gamePiece("i-c1", "ivory", "captain", 7, 3),
-      gamePiece("i-c2", "ivory", "captain", 7, 4),
+      gamePiece("i-c1", "ivory", "boss", 7, 3),
+      gamePiece("i-c2", "ivory", "boss", 7, 4),
       gamePiece("b-g1", "burgundy", "guard", 1, 3),
       gamePiece("b-g2", "burgundy", "guard", 2, 4),
       gamePiece("b-g3", "burgundy", "guard", 5, 5),
-      gamePiece("b-c1", "burgundy", "captain", 0, 4),
-      gamePiece("b-c2", "burgundy", "captain", 0, 5),
+      gamePiece("b-c1", "burgundy", "boss", 0, 4),
+      gamePiece("b-c2", "burgundy", "boss", 0, 5),
     ]);
 
     const next = applyMove(state, "i-g1", { row: 2, col: 3 });
     expect(next.lastMove?.capturedPieceIds).toEqual(["b-g1", "b-g2"]);
   });
 
-  test("does not capture diagonally or punish moving between enemy pieces", () => {
+  test("captures diagonally but does not punish moving between enemy pieces", () => {
     const diagonal = testState([
       gamePiece("i-g1", "ivory", "guard", 2, 1),
       gamePiece("i-g2", "ivory", "guard", 4, 4),
-      gamePiece("i-c1", "ivory", "captain", 7, 3),
-      gamePiece("i-c2", "ivory", "captain", 7, 4),
+      gamePiece("i-c1", "ivory", "boss", 7, 3),
+      gamePiece("i-c2", "ivory", "boss", 7, 4),
       gamePiece("b-g1", "burgundy", "guard", 3, 3),
       gamePiece("b-g2", "burgundy", "guard", 5, 5),
-      gamePiece("b-c1", "burgundy", "captain", 0, 3),
-      gamePiece("b-c2", "burgundy", "captain", 0, 4),
+      gamePiece("b-c1", "burgundy", "boss", 0, 3),
+      gamePiece("b-c2", "burgundy", "boss", 0, 4),
     ]);
     const diagonalMove = applyMove(diagonal, "i-g1", { row: 2, col: 2 });
-    expect(diagonalMove.pieces.some((piece) => piece.id === "b-g1")).toBe(true);
+    expect(diagonalMove.pieces.some((piece) => piece.id === "b-g1")).toBe(
+      false,
+    );
 
     const betweenEnemies = testState([
       gamePiece("i-g1", "ivory", "guard", 2, 1),
-      gamePiece("i-c1", "ivory", "captain", 7, 3),
-      gamePiece("i-c2", "ivory", "captain", 7, 4),
+      gamePiece("i-c1", "ivory", "boss", 7, 3),
+      gamePiece("i-c2", "ivory", "boss", 7, 4),
       gamePiece("b-g1", "burgundy", "guard", 1, 2),
       gamePiece("b-g2", "burgundy", "guard", 3, 2),
       gamePiece("b-g3", "burgundy", "guard", 5, 5),
-      gamePiece("b-c1", "burgundy", "captain", 0, 3),
-      gamePiece("b-c2", "burgundy", "captain", 0, 4),
+      gamePiece("b-c1", "burgundy", "boss", 0, 3),
+      gamePiece("b-c2", "burgundy", "boss", 0, 4),
     ]);
     const safeMove = applyMove(betweenEnemies, "i-g1", { row: 2, col: 2 });
     expect(safeMove.pieces.some((piece) => piece.id === "i-g1")).toBe(true);
     expect(safeMove.lastMove?.capturedPieceIds).toEqual([]);
   });
 
+  test("scores one for a guard, two for a plus/pyramid guard, and three for a boss", () => {
+    const state = testState([
+      gamePiece("i-g1", "ivory", "guard", 4, 1),
+      gamePiece("i-g2", "ivory", "guard", 3, 3),
+      gamePiece("i-g3", "ivory", "guard", 1, 1),
+      gamePiece("i-g4", "ivory", "guard", 1, 3),
+      gamePiece("b-g1", "burgundy", "guard", 3, 2),
+      gamePiece("b-g2", "burgundy", "guard", 2, 1, "rook"),
+      gamePiece("b-c1", "burgundy", "boss", 2, 2),
+      gamePiece("b-c2", "burgundy", "boss", 0, 4),
+      gamePiece("b-g3", "burgundy", "guard", 6, 5),
+      gamePiece("b-g4", "burgundy", "guard", 6, 6),
+    ]);
+
+    const next = applyMove(state, "i-g1", { row: 3, col: 1 });
+    expect(next.lastMove?.capturedPieceIds).toEqual(["b-g2", "b-g1", "b-c1"]);
+    expect(next.lastMove?.scoreEarned).toBe(6);
+    expect(next.scores).toEqual({ ivory: 6, burgundy: 0 });
+  });
+
   test("wins by occupying all four center cells", () => {
     const state = testState([
       gamePiece("i-g1", "ivory", "guard", 2, 3),
       gamePiece("i-g2", "ivory", "guard", 3, 4),
-      gamePiece("i-c1", "ivory", "captain", 4, 3),
-      gamePiece("i-c2", "ivory", "captain", 4, 4),
+      gamePiece("i-c1", "ivory", "boss", 4, 3),
+      gamePiece("i-c2", "ivory", "boss", 4, 4),
       gamePiece("b-g1", "burgundy", "guard", 1, 1),
       gamePiece("b-g2", "burgundy", "guard", 1, 2),
-      gamePiece("b-c1", "burgundy", "captain", 0, 3),
-      gamePiece("b-c2", "burgundy", "captain", 0, 4),
+      gamePiece("b-c1", "burgundy", "boss", 0, 3),
+      gamePiece("b-c2", "burgundy", "boss", 0, 4),
     ]);
 
     const next = applyMove(state, "i-g1", { row: 3, col: 3 });
@@ -334,15 +347,15 @@ describe("SEZE capture and victory", () => {
     expect(next.winReason).toBe("center");
   });
 
-  test("wins by capturing both opposing bosses", () => {
+  test("wins by capturing every opposing boss", () => {
     const state = testState([
       gamePiece("i-g1", "ivory", "guard", 3, 1),
       gamePiece("i-g2", "ivory", "guard", 1, 2),
       gamePiece("i-g3", "ivory", "guard", 3, 4),
-      gamePiece("i-c1", "ivory", "captain", 7, 3),
-      gamePiece("i-c2", "ivory", "captain", 7, 4),
-      gamePiece("b-c1", "burgundy", "captain", 2, 2),
-      gamePiece("b-c2", "burgundy", "captain", 3, 3),
+      gamePiece("i-c1", "ivory", "boss", 7, 3),
+      gamePiece("i-c2", "ivory", "boss", 7, 4),
+      gamePiece("b-c1", "burgundy", "boss", 2, 2),
+      gamePiece("b-c2", "burgundy", "boss", 3, 3),
       gamePiece("b-g1", "burgundy", "guard", 5, 1),
       gamePiece("b-g2", "burgundy", "guard", 5, 2),
       gamePiece("b-g3", "burgundy", "guard", 5, 3),
@@ -350,18 +363,37 @@ describe("SEZE capture and victory", () => {
 
     const next = applyMove(state, "i-g1", { row: 3, col: 2 });
     expect(next.winner).toBe("ivory");
-    expect(next.winReason).toBe("captains");
+    expect(next.winReason).toBe("bosses");
+  });
+
+  test("a promoted boss must also be captured for the boss victory", () => {
+    const state = testState([
+      gamePiece("i-g1", "ivory", "guard", 3, 1),
+      gamePiece("i-g2", "ivory", "guard", 3, 4),
+      gamePiece("i-b1", "ivory", "boss", 7, 3),
+      gamePiece("i-b2", "ivory", "boss", 7, 4),
+      gamePiece("b-b1", "burgundy", "boss", 3, 3),
+      gamePiece("b-promoted", "burgundy", "boss", 0, 4, "boss"),
+      gamePiece("b-g1", "burgundy", "guard", 5, 1),
+      gamePiece("b-g2", "burgundy", "guard", 5, 2),
+      gamePiece("b-g3", "burgundy", "guard", 5, 3),
+    ]);
+
+    const next = applyMove(state, "i-g1", { row: 3, col: 2 });
+    expect(next.lastMove?.capturedPieceIds).toEqual(["b-b1"]);
+    expect(next.pieces.some((piece) => piece.id === "b-promoted")).toBe(true);
+    expect(next.winner).toBeNull();
   });
 
   test("wins by reducing the opposing force to two pieces", () => {
     const state = testState([
       gamePiece("i-g1", "ivory", "guard", 3, 1),
       gamePiece("i-g2", "ivory", "guard", 3, 4),
-      gamePiece("i-c1", "ivory", "captain", 7, 3),
-      gamePiece("i-c2", "ivory", "captain", 7, 4),
+      gamePiece("i-c1", "ivory", "boss", 7, 3),
+      gamePiece("i-c2", "ivory", "boss", 7, 4),
       gamePiece("b-g1", "burgundy", "guard", 3, 3),
-      gamePiece("b-c1", "burgundy", "captain", 0, 3),
-      gamePiece("b-c2", "burgundy", "captain", 0, 4),
+      gamePiece("b-c1", "burgundy", "boss", 0, 3),
+      gamePiece("b-c2", "burgundy", "boss", 0, 4),
     ]);
 
     const next = applyMove(state, "i-g1", { row: 3, col: 2 });

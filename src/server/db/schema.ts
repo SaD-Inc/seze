@@ -14,6 +14,7 @@ export const games = createTable(
   (d) => ({
     id: d.uuid().defaultRandom().primaryKey(),
     code: d.varchar({ length: 8 }).notNull(),
+    analyticsMatchId: d.uuid().defaultRandom().notNull(),
     status: d.varchar({ length: 16 }).$type<GameStatus>().notNull(),
     rulesetVersion: d.varchar({ length: 32 }).notNull(),
     version: d.integer().default(0).notNull(),
@@ -25,6 +26,7 @@ export const games = createTable(
   }),
   (table) => [
     uniqueIndex("game_code_unique").on(table.code),
+    uniqueIndex("game_analytics_match_id_unique").on(table.analyticsMatchId),
     index("game_status_updated_idx").on(table.status, table.updatedAt),
     index("game_updated_idx").on(table.updatedAt),
   ],

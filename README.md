@@ -27,22 +27,26 @@ A public, guest-first web implementation of the two-player abstract strategy gam
 - Learn through a responsive visual guide with animated movement, capture, and
   power-space examples plus a reduced-motion fallback.
 - Use the transcript-confirmed boss terminology and three victory conditions.
-- Start all 16 pieces in the central 4×4, with Ivory above Burgundy and each
+- Start all 16 pieces in the central 4×4, with Gold above Red and each
   side's bosses together in the middle of its inward-facing row.
-- Show eight bare perimeter powers—four `+` and four `×`. A guard landing on
-  `+` gains attached rook-like movement; `×` grants attached bishop-like
-  movement.
-- Let bosses move one or two clear squares orthogonally or diagonally while
-  preserving earlier matches under their original rules version.
-- Use the current versioned movement and power rules with legal-move
-  highlighting and sandwich captures.
+- Let Red move first. Every guard can step one square in any of eight
+  directions, while bosses move one or two clear squares in any direction.
+- Show four `+` and four `×` perimeter power spaces. A guard landing on `+`
+  gains long rook-like lines; `×` grants a pyramid cap with long diagonals.
+  A guard landing on one of the four center markers receives a crown and
+  becomes a boss.
+- Let bosses move one or two clear squares orthogonally or diagonally.
+- Capture by completing a horizontal, vertical, or diagonal sandwich with the
+  piece that moved; entering an existing sandwich remains safe.
+- Score 1 point for a plain guard, 2 for a plus- or pyramid-capped guard, and 3
+  for any boss, including a crowned promotion, without using a game timer.
+- Use ruleset `prototype-0.3` for all matches and replays.
 - Run as a self-contained, minimal Next.js standalone image on Railway.
 
-The rules are incomplete in public sources. The `+`/`×` mapping, persistent
-attachment lifecycle, and diagonal boss movement remain working
-interpretations. Inferred behavior is isolated in the versioned rules engine
-so it can be revised without mixing match versions. Crowns and pyramids are
-intentionally deferred until their behavior is understood.
+The current movement, capture, cap, scoring, and victory rules follow a live
+rules recap. The cap replacement and shared inventory lifecycle were not
+explained there, so those details remain isolated in the versioned rules engine
+and can be revised without mixing match versions.
 
 ## Stack
 

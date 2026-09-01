@@ -7,6 +7,18 @@ export const siteConfig = {
   url: "https://playseze.com",
   language: "en",
   locale: "en_US",
-  contentLastModified: "2026-08-28",
-  sameAs: "https://boardgamegeek.com/boardgame/469945/seze",
+  contentLastModified: "2026-09-01",
+  gameCredits: {
+    designer: {
+      name: "James Wallis",
+      url: "https://jameswallis.com/",
+    },
+    collaborator: "Charles Leclerc",
+    sourceUrl:
+      "https://www.chivas.com/en/stories/a-seize-showdown-with-charles-leclerc/",
+  },
+  websiteCreator: {
+    name: "Denys",
+    url: "https://x.com/DChurchyn",
+  },
 } as const;

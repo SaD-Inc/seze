@@ -12,6 +12,7 @@ import Link from "next/link";
 
 import { Brand } from "~/components/brand";
 import { JsonLd } from "~/components/json-ld";
+import { ProjectDisclaimer } from "~/components/project-disclaimer";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { siteConfig } from "~/lib/site";
@@ -101,7 +102,7 @@ export default function StrategyPage() {
           </p>
           <p className="mt-6 text-xs text-[#8f816e]">
             <time dateTime={siteConfig.contentLastModified}>
-              Last reviewed 28 August 2026
+              Last reviewed 1 September 2026
             </time>
           </p>
         </section>
@@ -125,12 +126,13 @@ export default function StrategyPage() {
               claim one, support one, or force an enemy piece away from one.
             </PathCard>
             <PathCard icon={<Crown />} title="Boss pressure">
-              Track both bosses as distinct targets. A boss that moves freely
-              may still be unsafe if the landing square completes a sandwich.
+              Track every boss as a distinct target, including guards promoted
+              at the center. A boss that moves freely may still be unsafe if the
+              landing square completes a sandwich.
             </PathCard>
             <PathCard icon={<Shield />} title="Piece count">
               Every capture matters because reducing the opposing force to two
-              pieces ends the game even if both bosses survive.
+              pieces ends the game even if opposing bosses survive.
             </PathCard>
           </div>
         </section>
@@ -145,8 +147,8 @@ export default function StrategyPage() {
           <div className="mt-12 grid gap-5 md:grid-cols-2">
             <TacticCard number="01" title="Read the landing square first">
               Captures are resolved from the piece that just moved. Before
-              committing, inspect every orthogonal relationship created by the
-              destination—not only the route used to reach it.
+              committing, inspect every straight and diagonal relationship
+              created by the destination—not only the route used to reach it.
             </TacticCard>
             <TacticCard number="02" title="Keep valuable pieces supported">
               A lone advanced boss can become the middle of a sandwich. Build
@@ -159,10 +161,10 @@ export default function StrategyPage() {
               piece on the far side of a planned sandwich capture.
             </TacticCard>
             <TacticCard number="04" title="Treat powers as lanes, not prizes">
-              A + power creates long orthogonal movement and a × power creates
-              long diagonal movement under the current rules version. Take one
-              when its new lane changes the position, not merely because it is
-              available.
+              A + cap creates long orthogonal movement, a pyramid creates long
+              diagonal movement, and a crown promotes a guard into a boss. Take
+              one when its new lane changes the position, not merely because it
+              is available.
             </TacticCard>
             <TacticCard number="05" title="Create threats on different axes">
               A center threat and a boss trap demand different replies. When
@@ -170,9 +172,10 @@ export default function StrategyPage() {
               opponent answers the other.
             </TacticCard>
             <TacticCard number="06" title="Recount after every capture">
-              Captures change mobility, support, and the attrition win condition
-              at once. Pause after the board changes and calculate again instead
-              of continuing with the plan from the previous position.
+              Captures change mobility, score, support, and the attrition win
+              condition at once. A guard is worth 1, a plus- or pyramid-capped
+              guard 2, and any boss—including a crowned promotion—3. Pause after
+              the board changes and calculate again.
             </TacticCard>
           </div>
         </section>
@@ -270,9 +273,9 @@ export default function StrategyPage() {
         </section>
 
         <footer className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-[#d7b76f]/10 py-8 text-xs text-[#766b5d] sm:flex-row">
-          <p>SE!ZE · Plan the threat, then take the space.</p>
+          <ProjectDisclaimer tagline="SE!ZE · Plan the threat, then take the space." />
           <nav
-            className="flex items-center gap-5"
+            className="flex shrink-0 items-center gap-5"
             aria-label="Footer navigation"
           >
             <Link className="hover:text-[#c8ac75]" href="/">

@@ -12,6 +12,7 @@ import Link from "next/link";
 import { Brand } from "~/components/brand";
 import { JsonLd } from "~/components/json-ld";
 import { Lobby } from "~/components/lobby";
+import { ProjectDisclaimer } from "~/components/project-disclaimer";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { homeFaq, homeStructuredData } from "~/lib/structured-data";
@@ -78,6 +79,12 @@ export default function Home() {
                 </span>
               </div>
               <div className="relative z-10 flex w-full flex-col items-center">
+                <Badge
+                  variant="outline"
+                  className="mb-5 border-[#d0ac62]/20 bg-[#170b0d]/55 px-3 py-1 text-[11px] font-medium tracking-[0.08em] text-[#c9b898] backdrop-blur-sm"
+                >
+                  Unofficial version
+                </Badge>
                 <h1 className="font-serif text-6xl leading-none tracking-[0.08em] text-[#fff0d3] drop-shadow-2xl sm:text-8xl md:text-[9rem]">
                   SE<span className="text-[#c5304c]">!</span>ZE
                 </h1>
@@ -134,7 +141,8 @@ export default function Home() {
                 Occupy the four central spaces and hold the heart of the board.
               </Feature>
               <Feature number="02" title="Take the bosses">
-                Use positioning and sandwich captures to remove both bosses.
+                Use positioning and sandwich captures to remove every opposing
+                boss, including center promotions.
               </Feature>
               <Feature number="03" title="Break the guard">
                 Reduce the opposing force to its final two pieces.
@@ -226,9 +234,9 @@ export default function Home() {
           </section>
 
           <footer className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-[#d7b76f]/10 py-8 text-xs text-[#766b5d] sm:flex-row">
-            <p>SE!ZE · Play online with friends.</p>
+            <ProjectDisclaimer tagline="SE!ZE · Play online with friends." />
             <nav
-              className="flex items-center gap-5"
+              className="flex shrink-0 items-center gap-5"
               aria-label="Footer navigation"
             >
               <Link className="hover:text-[#c8ac75]" href="/">

@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { analyticsErrorCode, captureAnalyticsEvent } from "~/lib/analytics";
 import {
   readOrCreateDisplayName,
   resolveDisplayName,
@@ -38,21 +39,44 @@ export function Lobby() {
 
   const create = api.game.create.useMutation({
     onSuccess: ({ game, token }, variables) => {
+      captureAnalyticsEvent("table created", {
+        entry_point: "home",
+        match_id: game.analyticsMatchId,
+        ruleset_version: game.state.rulesetVersion,
+      });
       storePlayerToken(game.code, token, variables.displayName);
       router.push(`/game/${game.code}`);
+    },
+    onError: (error) => {
+      captureAnalyticsEvent("table create failed", {
+        entry_point: "home",
+        error_code: analyticsErrorCode(error),
+      });
     },
   });
 
   const join = api.game.join.useMutation({
     onSuccess: ({ game, token }, variables) => {
+      captureAnalyticsEvent("second player joined", {
+        join_method: "manual_code",
+        match_id: game.analyticsMatchId,
+        ruleset_version: game.state.rulesetVersion,
+      });
       storePlayerToken(game.code, token, variables.displayName);
       router.push(`/game/${game.code}`);
+    },
+    onError: (error) => {
+      captureAnalyticsEvent("table join failed", {
+        join_method: "manual_code",
+        error_code: analyticsErrorCode(error),
+      });
     },
   });
 
   function submitCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (resolvedCreateName.length >= 2) {
+      captureAnalyticsEvent("table create intent", { entry_point: "home" });
       create.mutate({ displayName: resolvedCreateName });
     }
   }
@@ -60,6 +84,9 @@ export function Lobby() {
   function submitJoin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (resolvedJoinName.length >= 2 && joinCode.trim().length >= 6) {
+      captureAnalyticsEvent("table join intent", {
+        join_method: "manual_code",
+      });
       join.mutate({ displayName: resolvedJoinName, code: joinCode });
     }
   }
@@ -92,8 +119,8 @@ export function Lobby() {
               Create a table
             </DialogTitle>
             <DialogDescription className="leading-6 text-[#bfae97]">
-              You’ll take Yellow. We’ll make a private table and give you a link
-              to invite your opponent.
+              You’ll take Red and move first. We’ll make a private table and
+              give you a link to invite your opponent.
             </DialogDescription>
           </DialogHeader>
           <form className="space-y-4" onSubmit={submitCreate}>

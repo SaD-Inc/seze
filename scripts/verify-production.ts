@@ -36,6 +36,12 @@ const joined = await client.game.join.mutate({
 if (joined.game.status !== "active" || joined.game.players.length !== 2) {
   throw new Error("The second guest did not activate the table.");
 }
+if (joined.game.analyticsMatchId !== created.game.analyticsMatchId) {
+  throw new Error("The analytics match identifier changed between guests.");
+}
+if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(created.game.analyticsMatchId)) {
+  throw new Error("The analytics match identifier is not an opaque UUID.");
+}
 
 const subscriptionAbort = new AbortController();
 let markSubscriptionReady: (() => void) | undefined;

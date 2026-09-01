@@ -4,25 +4,17 @@ import type {
   GameState,
   PlayerColor,
   PowerType,
-  RulesetVersion,
   WinReason,
 } from "~/game/types";
 
 export const BOARD_SIZE = 8;
-export const RULESET_VERSION = "prototype-0.2" as const;
+export const RULESET_VERSION = "prototype-0.3" as const;
 
 export const CENTER_CELLS: readonly Coordinate[] = [
   { row: 3, col: 3 },
   { row: 3, col: 4 },
   { row: 4, col: 3 },
   { row: 4, col: 4 },
-];
-
-const LEGACY_POWER_CELLS: ReadonlyArray<Coordinate & { power: PowerType }> = [
-  { row: 1, col: 1, power: "bishop" },
-  { row: 1, col: 6, power: "rook" },
-  { row: 6, col: 1, power: "rook" },
-  { row: 6, col: 6, power: "bishop" },
 ];
 
 export const POWER_CELLS: ReadonlyArray<Coordinate & { power: PowerType }> = [
@@ -80,15 +72,12 @@ export function isPlayableCell({ row, col }: Coordinate): boolean {
   );
 }
 
-export function powerAt(
-  coordinate: Coordinate,
-  rulesetVersion: RulesetVersion = RULESET_VERSION,
-): PowerType | null {
-  const powerCells =
-    rulesetVersion === "prototype-0.1" ? LEGACY_POWER_CELLS : POWER_CELLS;
+export function powerAt(coordinate: Coordinate): PowerType | null {
+  if (isCenterCell(coordinate)) return "boss";
 
   return (
-    powerCells.find((cell) => coordinatesEqual(cell, coordinate))?.power ?? null
+    POWER_CELLS.find((cell) => coordinatesEqual(cell, coordinate))?.power ??
+    null
   );
 }
 
@@ -106,27 +95,6 @@ function piece(
   return { id, color, kind, row, col, power: null };
 }
 
-function createLegacyPieces(): GamePiece[] {
-  return [
-    piece("i-g1", "ivory", "guard", 5, 1),
-    piece("i-g2", "ivory", "guard", 5, 2),
-    piece("i-g3", "ivory", "guard", 5, 5),
-    piece("i-g4", "ivory", "guard", 5, 6),
-    piece("i-g5", "ivory", "guard", 4, 2),
-    piece("i-g6", "ivory", "guard", 4, 5),
-    piece("i-c1", "ivory", "captain", 4, 3),
-    piece("i-c2", "ivory", "captain", 4, 4),
-    piece("b-g1", "burgundy", "guard", 2, 1),
-    piece("b-g2", "burgundy", "guard", 2, 2),
-    piece("b-g3", "burgundy", "guard", 2, 5),
-    piece("b-g4", "burgundy", "guard", 2, 6),
-    piece("b-g5", "burgundy", "guard", 3, 2),
-    piece("b-g6", "burgundy", "guard", 3, 5),
-    piece("b-c1", "burgundy", "captain", 3, 3),
-    piece("b-c2", "burgundy", "captain", 3, 4),
-  ];
-}
-
 function createCurrentPieces(): GamePiece[] {
   return [
     piece("i-g1", "ivory", "guard", 2, 2),
@@ -135,33 +103,29 @@ function createCurrentPieces(): GamePiece[] {
     piece("i-g4", "ivory", "guard", 2, 5),
     piece("i-g5", "ivory", "guard", 3, 2),
     piece("i-g6", "ivory", "guard", 3, 5),
-    piece("i-c1", "ivory", "captain", 3, 3),
-    piece("i-c2", "ivory", "captain", 3, 4),
+    piece("i-c1", "ivory", "boss", 3, 3),
+    piece("i-c2", "ivory", "boss", 3, 4),
     piece("b-g1", "burgundy", "guard", 5, 2),
     piece("b-g2", "burgundy", "guard", 5, 3),
     piece("b-g3", "burgundy", "guard", 5, 4),
     piece("b-g4", "burgundy", "guard", 5, 5),
     piece("b-g5", "burgundy", "guard", 4, 2),
     piece("b-g6", "burgundy", "guard", 4, 5),
-    piece("b-c1", "burgundy", "captain", 4, 3),
-    piece("b-c2", "burgundy", "captain", 4, 4),
+    piece("b-c1", "burgundy", "boss", 4, 3),
+    piece("b-c2", "burgundy", "boss", 4, 4),
   ];
 }
 
-export function createInitialState(
-  rulesetVersion: RulesetVersion = RULESET_VERSION,
-): GameState {
+export function createInitialState(): GameState {
   return {
-    rulesetVersion,
-    turn: "ivory",
+    rulesetVersion: RULESET_VERSION,
+    turn: "burgundy",
     moveNumber: 0,
     winner: null,
     winReason: null,
     lastMove: null,
-    pieces:
-      rulesetVersion === "prototype-0.1"
-        ? createLegacyPieces()
-        : createCurrentPieces(),
+    scores: { ivory: 0, burgundy: 0 },
+    pieces: createCurrentPieces(),
   };
 }
 
@@ -205,39 +169,54 @@ export function getLegalMoves(state: GameState, pieceId: string): Coordinate[] {
   );
   if (!movingPiece || movingPiece.color !== state.turn) return [];
 
-  if (movingPiece.kind === "captain") {
-    const directions =
-      state.rulesetVersion === "prototype-0.1"
-        ? ORTHOGONAL_DIRECTIONS
-        : [...ORTHOGONAL_DIRECTIONS, ...DIAGONAL_DIRECTIONS];
-    return collectSlidingMoves(state, movingPiece, directions, 2);
+  const allDirections = [...ORTHOGONAL_DIRECTIONS, ...DIAGONAL_DIRECTIONS];
+
+  if (movingPiece.kind === "boss" || movingPiece.power === "boss") {
+    return collectSlidingMoves(state, movingPiece, allDirections, 2);
   }
 
   if (movingPiece.power === "rook") {
-    return collectSlidingMoves(
+    const poweredMoves = collectSlidingMoves(
       state,
       movingPiece,
       ORTHOGONAL_DIRECTIONS,
       BOARD_SIZE,
     );
+    return mergeCoordinates(
+      poweredMoves,
+      collectSlidingMoves(state, movingPiece, DIAGONAL_DIRECTIONS, 1),
+    );
   }
 
   if (movingPiece.power === "bishop") {
-    return collectSlidingMoves(
+    const poweredMoves = collectSlidingMoves(
       state,
       movingPiece,
       DIAGONAL_DIRECTIONS,
       BOARD_SIZE,
     );
+    return mergeCoordinates(
+      poweredMoves,
+      collectSlidingMoves(state, movingPiece, ORTHOGONAL_DIRECTIONS, 1),
+    );
   }
 
-  return collectSlidingMoves(state, movingPiece, ORTHOGONAL_DIRECTIONS, 1);
+  return collectSlidingMoves(state, movingPiece, allDirections, 1);
+}
+
+function mergeCoordinates(...groups: readonly Coordinate[][]): Coordinate[] {
+  const unique = new Map<string, Coordinate>();
+  for (const coordinate of groups.flat()) {
+    unique.set(coordinateKey(coordinate), coordinate);
+  }
+  return [...unique.values()];
 }
 
 function capturedAfterMove(state: GameState, movingPiece: GamePiece): string[] {
   const captured = new Set<string>();
+  const captureDirections = [...ORTHOGONAL_DIRECTIONS, ...DIAGONAL_DIRECTIONS];
 
-  for (const direction of ORTHOGONAL_DIRECTIONS) {
+  for (const direction of captureDirections) {
     const adjacent = getPieceAt(state, {
       row: movingPiece.row + direction.row,
       col: movingPiece.col + direction.col,
@@ -254,6 +233,11 @@ function capturedAfterMove(state: GameState, movingPiece: GamePiece): string[] {
   return [...captured];
 }
 
+export function scoreForCapturedPiece(piece: GamePiece): number {
+  if (piece.kind === "boss") return 3;
+  return piece.power ? 2 : 1;
+}
+
 function determineWinner(
   pieces: GamePiece[],
   movingColor: PlayerColor,
@@ -267,8 +251,8 @@ function determineWinner(
   const opponentPieces = pieces.filter(
     (candidate) => candidate.color === opponent,
   );
-  if (!opponentPieces.some((candidate) => candidate.kind === "captain")) {
-    return { winner: movingColor, reason: "captains" };
+  if (!opponentPieces.some((candidate) => candidate.kind === "boss")) {
+    return { winner: movingColor, reason: "bosses" };
   }
   if (opponentPieces.length <= 2) {
     return { winner: movingColor, reason: "pieces" };
@@ -300,17 +284,12 @@ export function applyMove(
   if (!legal) throw new InvalidMoveError("That move is not legal.");
 
   const from = { row: movingPiece.row, col: movingPiece.col };
-  const usesLegacyPowerLifecycle =
-    state.rulesetVersion === "prototype-0.1" &&
-    movingPiece.kind === "guard" &&
-    movingPiece.power !== null;
   const movedPieces = state.pieces.map((candidate) =>
     candidate.id === pieceId
       ? {
           ...candidate,
           row: target.row,
           col: target.col,
-          power: usesLegacyPowerLifecycle ? null : candidate.power,
         }
       : candidate,
   );
@@ -321,25 +300,37 @@ export function applyMove(
     { ...state, pieces: movedPieces },
     movedPiece,
   );
+  const capturedPieces = movedPieces.filter((candidate) =>
+    captureIds.includes(candidate.id),
+  );
   const remainingPieces = movedPieces.filter(
     (candidate) => !captureIds.includes(candidate.id),
   );
-  const grantedPower =
-    movedPiece.kind === "guard" && !usesLegacyPowerLifecycle
-      ? powerAt(target, state.rulesetVersion)
-      : null;
+  const grantedPower = movedPiece.kind === "guard" ? powerAt(target) : null;
   const poweredPieces = remainingPieces.map((candidate) =>
     candidate.id === pieceId && grantedPower
-      ? { ...candidate, power: grantedPower }
+      ? {
+          ...candidate,
+          kind: grantedPower === "boss" ? ("boss" as const) : candidate.kind,
+          power: grantedPower,
+        }
       : candidate,
   );
   const result = determineWinner(poweredPieces, movingPiece.color);
+  const scoreEarned = capturedPieces.reduce(
+    (total, capturedPiece) => total + scoreForCapturedPiece(capturedPiece),
+    0,
+  );
 
   return {
     ...state,
     turn: result ? state.turn : otherColor(state.turn),
     moveNumber: state.moveNumber + 1,
     pieces: poweredPieces,
+    scores: {
+      ...state.scores,
+      [movingPiece.color]: state.scores[movingPiece.color] + scoreEarned,
+    },
     winner: result?.winner ?? null,
     winReason: result?.reason ?? null,
     lastMove: {
@@ -348,6 +339,7 @@ export function applyMove(
       to: target,
       capturedPieceIds: captureIds,
       powerGranted: grantedPower,
+      scoreEarned,
     },
   };
 }

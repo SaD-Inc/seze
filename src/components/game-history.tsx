@@ -48,11 +48,10 @@ export function GameHistory({ code }: { code: string }) {
     },
   );
   const moves = historyQuery.data?.moves ?? emptyMoves;
-  const rulesetVersion = historyQuery.data?.game.state.rulesetVersion;
   const replay = useMemo(() => {
     try {
       return {
-        states: buildReplayStates(moves, rulesetVersion),
+        states: buildReplayStates(moves),
         error: null,
       };
     } catch (error) {
@@ -64,7 +63,7 @@ export function GameHistory({ code }: { code: string }) {
             : "This replay is unavailable.",
       };
     }
-  }, [moves, rulesetVersion]);
+  }, [moves]);
 
   const maximumStep = moves.length;
   const step = Math.min(selectedStep ?? maximumStep, maximumStep);
@@ -185,6 +184,9 @@ export function GameHistory({ code }: { code: string }) {
                   </span>
                 </div>
                 <CardTitle className="font-serif text-2xl">{heading}</CardTitle>
+                <p className="text-xs tabular-nums text-[#a99572]">
+                  Red {state.scores.burgundy} · Gold {state.scores.ivory}
+                </p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <input
@@ -353,11 +355,11 @@ function HistoryRow({
 }
 
 function colorName(color: "ivory" | "burgundy") {
-  return color === "ivory" ? "Yellow" : "Burgundy";
+  return color === "ivory" ? "Gold" : "Red";
 }
 
 function pieceName(piece?: GamePiece) {
-  return piece?.kind === "captain" ? "Boss" : "Guard";
+  return piece?.kind === "boss" ? "Boss" : "Guard";
 }
 
 function squareName({ row, col }: PublicGameMove["from"]) {

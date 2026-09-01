@@ -1,4 +1,4 @@
-import { Crown, Plus, X } from "lucide-react";
+import { Crown, Plus, Pyramid, X } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 
 import { GamePieceToken } from "~/components/game-piece-token";
@@ -86,8 +86,10 @@ export function RulesBoardOverview() {
                 >
                   {power === "rook" ? (
                     <Plus className="size-full" strokeWidth={3.25} />
-                  ) : (
+                  ) : power === "bishop" ? (
                     <X className="size-full" strokeWidth={3.25} />
+                  ) : (
+                    <Crown className="size-full" strokeWidth={2.5} />
                   )}
                 </span>
               ) : null}
@@ -98,8 +100,8 @@ export function RulesBoardOverview() {
         <span className="pointer-events-none absolute inset-0 z-20 col-start-3 col-end-7 row-start-3 row-end-7 border-2 border-[var(--game-gold)]/80" />
       </div>
       <figcaption className="mt-5 text-center text-sm leading-6 text-[#a99a86]">
-        The opening position. Four clipped corners, eight bare +/× power pieces,
-        and four bosses in the center.
+        The opening position. Red moves first; four + and four × power spaces
+        ring the board, and the center markers grant crowns to guards.
       </figcaption>
     </figure>
   );
@@ -171,8 +173,10 @@ function DemoPiece({
         <span className="rule-demo-piece-power">
           {power === "rook" ? (
             <Plus aria-hidden="true" />
+          ) : power === "bishop" ? (
+            <Pyramid aria-hidden="true" />
           ) : (
-            <X aria-hidden="true" />
+            <Crown aria-hidden="true" />
           )}
         </span>
       ) : null}
@@ -199,8 +203,8 @@ function Target({
 
 export function GuardMoveVisual() {
   return (
-    <DemoBoard label="A yellow guard moves one square horizontally into the highlighted space.">
-      <Target row={2} col={3} />
+    <DemoBoard label="A gold guard moves one square diagonally into the highlighted space.">
+      <Target row={3} col={3} />
       <DemoPiece
         row={2}
         col={2}
@@ -213,7 +217,7 @@ export function GuardMoveVisual() {
 
 export function BossMoveVisual() {
   return (
-    <DemoBoard label="A yellow boss moves two clear squares diagonally into the highlighted space.">
+    <DemoBoard label="A gold boss moves two clear squares diagonally into the highlighted space.">
       <Target row={3} col={3} />
       <DemoPiece
         row={1}
@@ -228,18 +232,18 @@ export function BossMoveVisual() {
 
 export function CaptureVisual() {
   return (
-    <DemoBoard label="A yellow guard moves upward, trapping and removing a burgundy guard between two yellow pieces.">
-      <DemoPiece row={2} col={3} color="ivory" />
+    <DemoBoard label="A gold guard moves diagonally, trapping and removing a red guard between two gold pieces.">
+      <DemoPiece row={1} col={3} color="ivory" />
       <DemoPiece
         row={2}
         col={2}
         color="burgundy"
         animation="rule-demo-captured"
       />
-      <Target row={2} col={1} />
+      <Target row={3} col={1} />
       <DemoPiece
-        row={3}
-        col={1}
+        row={4}
+        col={0}
         color="ivory"
         animation="rule-demo-capture-move"
       />
@@ -250,7 +254,7 @@ export function CaptureVisual() {
 export function PowerMoveVisual() {
   return (
     <DemoBoard
-      label="A yellow guard lands on an × power piece, attaches it, and gains bishop-like diagonal movement."
+      label="A gold guard lands on an × power space, receives a pyramid cap, and gains long diagonal movement."
       pace="power"
     >
       <span style={position(3, 1)} className="rule-demo-power-space">

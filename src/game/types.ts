@@ -1,11 +1,9 @@
 export type PlayerColor = "ivory" | "burgundy";
-// `captain` is the legacy serialized key for the player-facing boss.
-export type PieceKind = "guard" | "captain";
-export type PowerType = "rook" | "bishop";
-export type RulesetVersion = "prototype-0.1" | "prototype-0.2";
+export type PieceKind = "guard" | "boss";
+export type PowerType = "rook" | "bishop" | "boss";
+export type RulesetVersion = "prototype-0.3";
 export type GameStatus = "waiting" | "active" | "finished";
-// `captains` remains serialized for compatibility; the rule is "take both bosses."
-export type WinReason = "center" | "captains" | "pieces";
+export type WinReason = "center" | "bosses" | "pieces";
 
 export type Coordinate = {
   row: number;
@@ -25,6 +23,7 @@ export type GameMove = {
   to: Coordinate;
   capturedPieceIds: string[];
   powerGranted: PowerType | null;
+  scoreEarned: number;
 };
 
 export type GameState = {
@@ -32,6 +31,7 @@ export type GameState = {
   turn: PlayerColor;
   moveNumber: number;
   pieces: GamePiece[];
+  scores: Record<PlayerColor, number>;
   lastMove: GameMove | null;
   winner: PlayerColor | null;
   winReason: WinReason | null;
@@ -44,6 +44,7 @@ export type PublicPlayer = {
 
 export type PublicGame = {
   code: string;
+  analyticsMatchId: string;
   status: GameStatus;
   version: number;
   state: GameState;
@@ -52,6 +53,7 @@ export type PublicGame = {
   rematch: {
     requestedBy: PlayerColor;
     gameCode: string | null;
+    analyticsMatchId: string | null;
   } | null;
   createdAt: Date;
   updatedAt: Date;

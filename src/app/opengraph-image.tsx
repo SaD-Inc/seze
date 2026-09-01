@@ -87,18 +87,19 @@ export default function OpenGraphImage() {
 
       <div
         style={{
-          background: "rgba(0, 0, 0, 0.22)",
-          border: "1px solid rgba(219, 183, 102, 0.3)",
-          borderRadius: 34,
+          background: "#242223",
+          border: "3px solid #44383b",
+          borderRadius: 22,
           display: "flex",
           flexDirection: "column",
-          padding: 22,
+          padding: 12,
+          boxShadow: "0 18px 48px rgba(0, 0, 0, 0.38)",
           transform: "rotate(4deg)",
         }}
       >
-        {board.map((row) => (
+        {board.map((row, rowIndex) => (
           <div key={row.id} style={{ display: "flex" }}>
-            {row.cells.map((cell) => (
+            {row.cells.map((cell, columnIndex) => (
               <div
                 key={cell.id}
                 style={{
@@ -106,28 +107,25 @@ export default function OpenGraphImage() {
                   background:
                     cell.kind === 0
                       ? "transparent"
-                      : cell.kind === 3
-                        ? "#9b223d"
-                        : "#d6b56c",
-                  border:
-                    cell.kind === 0
-                      ? "none"
-                      : "1px solid rgba(29, 13, 16, 0.45)",
+                      : (rowIndex + columnIndex) % 2 === 0
+                        ? "#d8d2c8"
+                        : "#303534",
                   display: "flex",
                   height: 62,
                   justifyContent: "center",
                   width: 62,
                 }}
               >
-                {cell.kind === 2 ? (
+                {cell.kind >= 2 ? (
                   <div
                     style={{
-                      background: "#201015",
-                      border: "5px solid #f1d694",
+                      background: cell.kind === 2 ? "#741426" : "#e6c83e",
+                      border: "3px solid #b68b42",
                       borderRadius: 999,
+                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.34)",
                       display: "flex",
-                      height: 36,
-                      width: 36,
+                      height: 40,
+                      width: 40,
                     }}
                   />
                 ) : null}

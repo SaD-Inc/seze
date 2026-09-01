@@ -474,7 +474,7 @@
   }
   44%,
   100% {
-    transform: translate3d(133.333%, 0, 0) scale(1);
+    transform: translate3d(133.333%, 133.333%, 0) scale(1);
   }
 }
 
@@ -517,7 +517,7 @@
   }
   44%,
   100% {
-    transform: translate3d(0, -133.333%, 0) scale(1);
+    transform: translate3d(133.333%, -133.333%, 0) scale(1);
   }
 }
 
@@ -598,7 +598,7 @@
   }
 
   .rule-demo-guard-move {
-    transform: translate3d(133.333%, 0, 0);
+    transform: translate3d(133.333%, 133.333%, 0);
   }
 
   .rule-demo-boss-move {
@@ -606,7 +606,7 @@
   }
 
   .rule-demo-capture-move {
-    transform: translate3d(0, -133.333%, 0);
+    transform: translate3d(133.333%, -133.333%, 0);
   }
 
   .rule-demo-captured {

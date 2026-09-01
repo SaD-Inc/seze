@@ -8,8 +8,12 @@ describe("quick join links", () => {
   });
 
   test("builds an absolute URL without retaining an existing path", () => {
-    expect(quickJoinUrl("https://play.example/game/OLD", "xy34za")).toBe(
-      "https://play.example/join/XY34ZA",
+    const invite = quickJoinUrl(
+      "https://play.example/game/OLD?utm_source=reddit",
+      "xy34za",
     );
+
+    expect(invite).toBe("https://play.example/join/XY34ZA");
+    expect(invite).not.toContain("utm_");
   });
 });

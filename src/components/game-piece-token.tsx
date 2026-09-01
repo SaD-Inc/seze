@@ -1,4 +1,4 @@
-import { Crown, Plus, X } from "lucide-react";
+import { Crown, Plus, Pyramid } from "lucide-react";
 
 import type { GamePiece, PlayerColor } from "~/game/types";
 import { cn } from "~/lib/utils";
@@ -26,15 +26,25 @@ export function GamePieceToken({
         className,
       )}
     >
-      {kind === "captain" ? (
+      {kind === "boss" ? (
         <Crown aria-hidden="true" className="size-[34%]" strokeWidth={2} />
       ) : null}
-      {power ? (
+      {power && !(kind === "boss" && power === "boss") ? (
         <span className="absolute -end-[16%] -top-[16%] grid size-[40%] min-h-3 min-w-3 place-items-center text-current">
           {power === "rook" ? (
             <Plus aria-hidden="true" className="size-[68%]" strokeWidth={3.8} />
+          ) : power === "bishop" ? (
+            <Pyramid
+              aria-hidden="true"
+              className="size-[72%]"
+              strokeWidth={3.2}
+            />
           ) : (
-            <X aria-hidden="true" className="size-[68%]" strokeWidth={3.8} />
+            <Crown
+              aria-hidden="true"
+              className="size-[72%]"
+              strokeWidth={3.2}
+            />
           )}
         </span>
       ) : null}

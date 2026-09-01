@@ -1,4 +1,12 @@
-import { ArrowRight, BookOpen, Crown, Focus, Plus, Shield } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Crown,
+  Focus,
+  Plus,
+  Shield,
+  Trophy,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "~/components/ui/button";
@@ -35,21 +43,29 @@ export function RulesDialog() {
         </DialogHeader>
         <div className="space-y-5 text-sm leading-6 text-[#d5c5ae]">
           <Rule icon={Shield} title="Move">
-            Guards move one open orthogonal space. Bosses move one or two open
-            spaces orthogonally or diagonally and cannot jump pieces.
+            Red moves first. Guards move one open square in any direction.
+            Bosses move one or two open squares in any direction and cannot jump
+            pieces.
           </Rule>
           <Rule icon={Plus} title="Attach a power">
-            A guard landing on + gains rook-like movement; × grants bishop-like
-            movement. The shape remains attached to that guard.
+            A guard on + gets a rook-like plus cap; × gives it a pyramid cap for
+            long diagonals. A guard reaching a center marker takes a crown and
+            becomes a boss.
           </Rule>
           <Rule icon={Focus} title="Capture">
-            Sandwich an opposing piece orthogonally between the piece you moved
-            and another friendly piece. A single move can capture on several
-            sides.
+            Complete a straight or diagonal sandwich with the piece you moved. A
+            piece that moves into an existing sandwich is safe; only the player
+            completing the trap captures.
           </Rule>
           <Rule icon={Crown} title="Win three ways">
-            Occupy all four central spaces, capture both opposing bosses, or
-            reduce the opponent to two remaining pieces.
+            Occupy all four central spaces, capture every opposing boss, or
+            reduce the opponent to two remaining pieces. Each side starts with
+            two bosses, and center promotion can add more.
+          </Rule>
+          <Rule icon={Trophy} title="Score captures">
+            Gain 1 point for a guard, 2 for a guard with a plus or pyramid cap,
+            and 3 for any boss, including a crowned promotion. Scores are
+            tracked without a timer and do not replace the three win conditions.
           </Rule>
           <Button
             asChild

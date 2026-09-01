@@ -24,32 +24,18 @@ function move(
 describe("game replay", () => {
   test("reconstructs every position from persisted moves", () => {
     const states = buildReplayStates([
-      move(1, "ivory", "i-g1", { row: 2, col: 2 }, { row: 1, col: 2 }),
-      move(2, "burgundy", "b-g1", { row: 5, col: 2 }, { row: 6, col: 2 }),
+      move(1, "burgundy", "b-g1", { row: 5, col: 2 }, { row: 6, col: 2 }),
+      move(2, "ivory", "i-g1", { row: 2, col: 2 }, { row: 1, col: 2 }),
     ]);
 
     expect(states).toHaveLength(3);
     expect(states[0]?.moveNumber).toBe(0);
-    expect(states[1]?.turn).toBe("burgundy");
-    expect(states[2]?.turn).toBe("ivory");
+    expect(states[1]?.turn).toBe("ivory");
+    expect(states[2]?.turn).toBe("burgundy");
+    expect(states[2]?.scores).toEqual({ ivory: 0, burgundy: 0 });
     expect(
       states[2]?.pieces.find((piece) => piece.id === "b-g1"),
     ).toMatchObject({ row: 6, col: 2 });
-  });
-
-  test("reconstructs retained games with their original ruleset", () => {
-    const states = buildReplayStates(
-      [
-        move(1, "ivory", "i-g1", { row: 5, col: 1 }, { row: 4, col: 1 }),
-        move(2, "burgundy", "b-g1", { row: 2, col: 1 }, { row: 3, col: 1 }),
-      ],
-      "prototype-0.1",
-    );
-
-    expect(states[0]?.rulesetVersion).toBe("prototype-0.1");
-    expect(
-      states[2]?.pieces.find((piece) => piece.id === "b-g1"),
-    ).toMatchObject({ row: 3, col: 1 });
   });
 
   test("rejects a replay with missing move numbers", () => {

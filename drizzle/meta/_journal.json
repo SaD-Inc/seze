@@ -22,6 +22,20 @@
       "when": 1787863943615,
       "tag": "0002_long_rogue",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787928880145,
+      "tag": "0003_cultured_baron_zemo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788281274876,
+      "tag": "0004_reset_matches_for_ruleset_0_3",
+      "breakpoints": true
     }
   ]
 }
