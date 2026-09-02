@@ -399,13 +399,15 @@ function RuleCard({
   children: React.ReactNode;
 }) {
   return (
-    <article className="group overflow-hidden rounded-2xl border border-[#d5b46b]/16 bg-[#180b0d]/80 shadow-xl transition hover:border-[#d5b46b]/28">
-      <div className="p-4 sm:p-5">{children}</div>
-      <div className="border-t border-[#d5b46b]/12 px-5 pb-6 pt-5 sm:px-7 sm:pb-7">
-        <span className="font-mono text-xs tracking-[0.2em] text-[#9c7d49]">
-          {number}
-        </span>
-        <h3 className="mt-3 font-serif text-2xl text-[#f2dfbf]">{title}</h3>
+    <article className="group overflow-hidden rounded-2xl border border-[#d5b46b]/16 bg-[#180b0d]/80 shadow-xl transition-colors hover:border-[#d5b46b]/28">
+      <div className="px-4 pb-0 pt-4 sm:px-5 sm:pt-5">{children}</div>
+      <div className="px-5 pb-6 pt-4 sm:px-7 sm:pb-7 sm:pt-4">
+        <div className="flex items-start justify-between gap-5">
+          <h3 className="font-serif text-2xl text-[#f2dfbf]">{title}</h3>
+          <span className="mt-1 shrink-0 font-mono text-xs tracking-[0.2em] text-[#9c7d49]">
+            {number}
+          </span>
+        </div>
         <p className="mt-2 text-sm leading-6 text-[#a99a86]">{description}</p>
       </div>
     </article>

@@ -57,6 +57,15 @@ type AnalyticsEvents = {
     ruleset_version: RulesetVersion;
     win_reason: WinReason;
   };
+  "first win share shown": { match_id: string; win_reason: WinReason };
+  "first win share clicked": {
+    match_id: string;
+    share_method: "clipboard" | "native";
+  };
+  "first win share completed": {
+    match_id: string;
+    share_method: "clipboard" | "native";
+  };
   "rematch requested": {
     match_id: string;
     request_type: "accepted" | "initiated";

@@ -7,6 +7,7 @@ import {
   Play,
   Radio,
   RotateCcw,
+  Share2,
   Users,
   Zap,
 } from "lucide-react";
@@ -51,6 +52,8 @@ const winCopy: Record<WinReason, string> = {
   pieces: "reduced the opposition to two pieces",
 };
 
+const FIRST_WIN_SHARE_MATCH_KEY = "seze:first-win-share-match:v1";
+
 export function GameRoom({
   code,
   quickJoin = false,
@@ -64,6 +67,10 @@ export function GameRoom({
   const [tokenLoaded, setTokenLoaded] = useState(false);
   const [suggestedName, setSuggestedName] = useState("");
   const [joinName, setJoinName] = useState("");
+  const [firstWinShareMatchId, setFirstWinShareMatchId] = useState<
+    string | null
+  >(null);
+  const [firstWinSharePending, setFirstWinSharePending] = useState(false);
   const soundedMove = useRef<SoundedMove>(null);
   const utils = api.useUtils();
 
@@ -86,6 +93,42 @@ export function GameRoom({
   });
 
   const moveNumber = gameQuery.data?.state.moveNumber;
+
+  useEffect(() => {
+    const game = gameQuery.data;
+    if (
+      game?.status !== "finished" ||
+      !game.viewerColor ||
+      game.state.winner !== game.viewerColor ||
+      !game.state.winReason
+    ) {
+      return;
+    }
+
+    let firstWinMatchId = game.analyticsMatchId;
+
+    try {
+      firstWinMatchId =
+        window.localStorage.getItem(FIRST_WIN_SHARE_MATCH_KEY) ??
+        game.analyticsMatchId;
+      window.localStorage.setItem(FIRST_WIN_SHARE_MATCH_KEY, firstWinMatchId);
+    } catch {
+      // Keep the first-win prompt available when storage is blocked.
+    }
+
+    setFirstWinShareMatchId(firstWinMatchId);
+
+    if (firstWinMatchId === game.analyticsMatchId) {
+      captureAnalyticsEventOnce(
+        "first win share shown",
+        game.analyticsMatchId,
+        {
+          match_id: game.analyticsMatchId,
+          win_reason: game.state.winReason,
+        },
+      );
+    }
+  }, [gameQuery.data]);
 
   useEffect(() => {
     if (moveNumber === undefined) return;
@@ -314,6 +357,52 @@ export function GameRoom({
     rematch.mutate({ code: normalizedCode, token });
   }
 
+  async function shareFirstWin() {
+    const game = gameQuery.data;
+    if (game?.status !== "finished" || game.state.winner !== game.viewerColor) {
+      return;
+    }
+
+    const url = new URL("/", window.location.origin);
+    url.searchParams.set("utm_source", "player_share");
+    url.searchParams.set("utm_medium", "organic");
+    url.searchParams.set("utm_campaign", "first_win");
+
+    const text = `I just won SE!ZE in ${game.state.moveNumber} moves. Think you can beat me? No account needed.`;
+    const shareMethod =
+      typeof navigator.share === "function" ? "native" : "clipboard";
+
+    captureAnalyticsEvent("first win share clicked", {
+      match_id: game.analyticsMatchId,
+      share_method: shareMethod,
+    });
+    setFirstWinSharePending(true);
+
+    try {
+      if (shareMethod === "native") {
+        await navigator.share({
+          title: "I won at SE!ZE",
+          text,
+          url: url.toString(),
+        });
+      } else {
+        await navigator.clipboard.writeText(`${text}\n${url.toString()}`);
+        toast.success("Win message copied—share it anywhere");
+      }
+
+      captureAnalyticsEvent("first win share completed", {
+        match_id: game.analyticsMatchId,
+        share_method: shareMethod,
+      });
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) {
+        toast.error("Could not open sharing");
+      }
+    } finally {
+      setFirstWinSharePending(false);
+    }
+  }
+
   if (game.status === "waiting" && !game.viewerColor) {
     return (
       <JoinTableGate
@@ -376,8 +465,14 @@ export function GameRoom({
                   viewerName={viewerName}
                   newTablePending={createAnother.isPending}
                   rematchPending={rematch.isPending}
+                  firstWinSharePending={firstWinSharePending}
+                  showFirstWinShare={
+                    firstWinShareMatchId === game.analyticsMatchId &&
+                    game.state.winner === game.viewerColor
+                  }
                   onNewTable={startAnotherGame}
                   onRematch={requestGameRematch}
+                  onShareFirstWin={shareFirstWin}
                 />
               </div>
             ) : null}
@@ -456,15 +551,21 @@ function FinishedGameActions({
   viewerName,
   newTablePending,
   rematchPending,
+  firstWinSharePending,
+  showFirstWinShare,
   onNewTable,
   onRematch,
+  onShareFirstWin,
 }: {
   game: PublicGame;
   viewerName?: string;
   newTablePending: boolean;
   rematchPending: boolean;
+  firstWinSharePending: boolean;
+  showFirstWinShare: boolean;
   onNewTable: () => void;
   onRematch: () => void;
+  onShareFirstWin: () => void;
 }) {
   const rematchRequester = game.rematch
     ? game.players.find((player) => player.color === game.rematch?.requestedBy)
@@ -522,6 +623,30 @@ function FinishedGameActions({
                   ? "Accept rematch"
                   : "Rematch"}
           </Button>
+        ) : null}
+        {showFirstWinShare ? (
+          <div className="rounded-xl border border-[#d6b46c]/25 bg-[#d6b46c]/8 p-3 text-left">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#d9bb78]">
+                  First victory
+                </p>
+                <p className="mt-1 text-sm leading-5 text-[#ead9ba]">
+                  Enjoyed the win? Bring someone new to the table.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onShareFirstWin}
+                disabled={firstWinSharePending}
+                className="h-10 shrink-0 border-[#d6b46c]/35 bg-[#d6b46c]/12 px-3 text-[#f4d99d] hover:bg-[#d6b46c]/20 hover:text-[#ffebbd]"
+              >
+                <Share2 className="size-4" />
+                {firstWinSharePending ? "Opening…" : "Share win"}
+              </Button>
+            </div>
+          </div>
         ) : null}
         <div className="grid grid-cols-2 gap-3">
           <Button

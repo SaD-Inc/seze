@@ -1,5 +1,5 @@
 import { Crown, Plus, Pyramid, X } from "lucide-react";
-import type { CSSProperties, ReactNode } from "react";
+import { type CSSProperties, Fragment, type ReactNode } from "react";
 
 import { GamePieceToken } from "~/components/game-piece-token";
 import {
@@ -24,6 +24,61 @@ const demoCells = Array.from({ length: 25 }, (_, index) => ({
   row: Math.floor(index / 5),
   col: index % 5,
 }));
+
+type DemoCoordinate = (typeof demoCells)[number];
+
+const guardMoveChoices: readonly DemoCoordinate[] = [
+  { row: 1, col: 1 },
+  { row: 1, col: 2 },
+  { row: 1, col: 3 },
+  { row: 2, col: 1 },
+  { row: 2, col: 3 },
+  { row: 3, col: 1 },
+  { row: 3, col: 2 },
+  { row: 3, col: 3 },
+];
+
+const bossMoveChoices: readonly DemoCoordinate[] = [
+  { row: 0, col: 0 },
+  { row: 0, col: 2 },
+  { row: 0, col: 4 },
+  { row: 1, col: 1 },
+  { row: 1, col: 2 },
+  { row: 1, col: 3 },
+  { row: 2, col: 0 },
+  { row: 2, col: 1 },
+  { row: 2, col: 3 },
+  { row: 2, col: 4 },
+  { row: 3, col: 1 },
+  { row: 3, col: 2 },
+  { row: 3, col: 3 },
+  { row: 4, col: 0 },
+  { row: 4, col: 2 },
+  { row: 4, col: 4 },
+];
+
+const captureMoveChoices: readonly DemoCoordinate[] = [
+  { row: 3, col: 0 },
+  { row: 3, col: 1 },
+  { row: 4, col: 1 },
+];
+
+const unpoweredMoveChoices: readonly DemoCoordinate[] = [
+  { row: 2, col: 0 },
+  { row: 2, col: 1 },
+  { row: 3, col: 1 },
+  { row: 4, col: 0 },
+  { row: 4, col: 1 },
+];
+
+const diagonalCapMoveChoices: readonly DemoCoordinate[] = [
+  { row: 0, col: 4 },
+  { row: 1, col: 3 },
+  { row: 2, col: 0 },
+  { row: 2, col: 2 },
+  { row: 4, col: 0 },
+  { row: 4, col: 2 },
+];
 
 type PositionedStyle = CSSProperties & {
   "--demo-row": number;
@@ -187,24 +242,66 @@ function DemoPiece({
 function Target({
   row,
   col,
+  selected = false,
   className,
 }: {
   row: number;
   col: number;
+  selected?: boolean;
   className?: string;
 }) {
   return (
     <span
       style={position(row, col)}
-      className={cn("rule-demo-target", className)}
+      className={cn(
+        "rule-demo-target",
+        selected && "rule-demo-target-selected",
+        className,
+      )}
     />
+  );
+}
+
+function Targets({
+  choices,
+  selectedChoice,
+  className,
+}: {
+  choices: readonly DemoCoordinate[];
+  selectedChoice: DemoCoordinate;
+  className?: string;
+}) {
+  return (
+    <Fragment>
+      <span className={cn("rule-demo-target-group", className)}>
+        {choices
+          .filter(
+            (choice) =>
+              choice.row !== selectedChoice.row ||
+              choice.col !== selectedChoice.col,
+          )
+          .map((choice) => (
+            <Target
+              key={`${choice.row}:${choice.col}`}
+              row={choice.row}
+              col={choice.col}
+            />
+          ))}
+      </span>
+      <Target
+        row={selectedChoice.row}
+        col={selectedChoice.col}
+        selected
+        className={className}
+      />
+    </Fragment>
   );
 }
 
 export function GuardMoveVisual() {
   return (
-    <DemoBoard label="A gold guard moves one square diagonally into the highlighted space.">
-      <Target row={3} col={3} />
+    <DemoBoard label="Grey dots mark all eight legal destinations for a gold guard. The selected destination turns larger and blue before the guard moves one square diagonally.">
+      <Targets choices={guardMoveChoices} selectedChoice={{ row: 3, col: 3 }} />
       <DemoPiece
         row={2}
         col={2}
@@ -217,11 +314,11 @@ export function GuardMoveVisual() {
 
 export function BossMoveVisual() {
   return (
-    <DemoBoard label="A gold boss moves two clear squares diagonally into the highlighted space.">
-      <Target row={3} col={3} />
+    <DemoBoard label="Grey dots mark every legal one- and two-square destination for a gold boss. The selected destination turns larger and blue before the boss moves two squares diagonally.">
+      <Targets choices={bossMoveChoices} selectedChoice={{ row: 4, col: 4 }} />
       <DemoPiece
-        row={1}
-        col={1}
+        row={2}
+        col={2}
         color="ivory"
         boss
         animation="rule-demo-boss-move"
@@ -232,7 +329,7 @@ export function BossMoveVisual() {
 
 export function CaptureVisual() {
   return (
-    <DemoBoard label="A gold guard moves diagonally, trapping and removing a red guard between two gold pieces.">
+    <DemoBoard label="Grey dots mark every legal guard destination. The selected destination turns larger and blue before the guard makes the diagonal move that traps and removes a red guard.">
       <DemoPiece row={1} col={3} color="ivory" />
       <DemoPiece
         row={2}
@@ -240,7 +337,10 @@ export function CaptureVisual() {
         color="burgundy"
         animation="rule-demo-captured"
       />
-      <Target row={3} col={1} />
+      <Targets
+        choices={captureMoveChoices}
+        selectedChoice={{ row: 3, col: 1 }}
+      />
       <DemoPiece
         row={4}
         col={0}
@@ -254,13 +354,22 @@ export function CaptureVisual() {
 export function PowerMoveVisual() {
   return (
     <DemoBoard
-      label="A gold guard lands on an × power space, receives a pyramid cap, and gains long diagonal movement."
+      label="Grey dots first mark every legal guard step, then switch to every available diagonal destination after the guard receives a pyramid cap. Each selected destination turns larger and blue."
       pace="power"
     >
       <span style={position(3, 1)} className="rule-demo-power-space">
         <X aria-hidden="true" />
       </span>
-      <Target row={1} col={3} className="rule-demo-target-final" />
+      <Targets
+        choices={unpoweredMoveChoices}
+        selectedChoice={{ row: 3, col: 1 }}
+        className="rule-demo-target-before-power"
+      />
+      <Targets
+        choices={diagonalCapMoveChoices}
+        selectedChoice={{ row: 1, col: 3 }}
+        className="rule-demo-target-after-power"
+      />
       <DemoPiece
         row={3}
         col={0}
