@@ -45,10 +45,10 @@ export const metadata: Metadata = {
     description,
     images: [
       {
-        url: "/opengraph-image",
+        url: "/opengraph-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Play SE!ZE online — a two-player strategy game",
+        alt: "SE!ZE — Move. Trap. Seize. Play the free strategy game online. No account needed.",
       },
     ],
   },
@@ -56,7 +56,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title,
     description,
-    images: ["/twitter-image"],
+    images: [
+      {
+        url: "/twitter-image.jpg",
+        alt: "SE!ZE — Move. Trap. Seize. Play the free strategy game online. No account needed.",
+      },
+    ],
   },
 };
 

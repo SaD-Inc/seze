@@ -8,6 +8,20 @@ import "./src/env.js";
 const config = {
   output: "standalone",
   poweredByHeader: false,
+  async redirects() {
+    return [
+      {
+        source: "/opengraph-image",
+        destination: "/opengraph-image.jpg",
+        permanent: true,
+      },
+      {
+        source: "/twitter-image",
+        destination: "/twitter-image.jpg",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
