@@ -1,4 +1,6 @@
 export type PlayerColor = "ivory" | "burgundy";
+export type PlayerKind = "human" | "bot";
+export type BotDifficulty = "easy" | "balanced" | "hard";
 export type PieceKind = "guard" | "boss";
 export type PowerType = "rook" | "bishop" | "boss";
 export type RulesetVersion = "prototype-0.3";
@@ -40,6 +42,7 @@ export type GameState = {
 export type PublicPlayer = {
   color: PlayerColor;
   displayName: string;
+  kind: PlayerKind;
 };
 
 export type PublicGame = {
@@ -50,6 +53,7 @@ export type PublicGame = {
   state: GameState;
   players: PublicPlayer[];
   viewerColor: PlayerColor | null;
+  botDifficulty: BotDifficulty | null;
   rematch: {
     requestedBy: PlayerColor;
     gameCode: string | null;

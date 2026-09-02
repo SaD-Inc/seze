@@ -170,6 +170,8 @@ export function GameBoard({
                 }`
               : "empty",
             legal ? "legal destination" : null,
+            lastFrom ? "last move origin" : null,
+            lastTo ? "last move destination" : null,
           ].filter(Boolean);
 
           if (!playable) {
@@ -193,7 +195,9 @@ export function GameBoard({
                 (coordinate.row + coordinate.col) % 2 === 0
                   ? lightBoardTile
                   : darkBoardTile,
-                (lastFrom || lastTo) && "ring-2 ring-inset ring-[#789b97]",
+                lastFrom && "ring-2 ring-inset ring-[#789b97]",
+                lastTo &&
+                  "z-[5] ring-4 ring-inset ring-[#82d5cd] shadow-[inset_0_0_0_1px_rgba(229,255,251,0.7)]",
                 legal && "cursor-pointer hover:brightness-105",
                 selected && "z-10",
               )}

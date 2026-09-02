@@ -5,6 +5,7 @@ import {
   httpBatchStreamLink,
   httpSubscriptionLink,
   loggerLink,
+  retryLink,
   splitLink,
 } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
@@ -43,6 +44,15 @@ export type RouterInputs = inferRouterInputs<AppRouter>;
  */
 export type RouterOutputs = inferRouterOutputs<AppRouter>;
 
+const transientSubscriptionErrors = new Set([
+  "BAD_GATEWAY",
+  "GATEWAY_TIMEOUT",
+  "INTERNAL_SERVER_ERROR",
+  "SERVICE_UNAVAILABLE",
+  "TIMEOUT",
+  "TOO_MANY_REQUESTS",
+]);
+
 export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
@@ -50,9 +60,28 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
     api.createClient({
       links: [
         loggerLink({
-          enabled: (op) =>
-            process.env.NODE_ENV === "development" ||
-            (op.direction === "down" && op.result instanceof Error),
+          enabled: (op) => {
+            // Subscription transports report expected reconnect states as errors.
+            // Logging those with console.error triggers Next's dev error overlay.
+            const operationType = (op as { type?: string }).type;
+            if (operationType === "subscription" && op.direction === "down") {
+              return false;
+            }
+
+            return (
+              process.env.NODE_ENV === "development" ||
+              (op.direction === "down" && op.result instanceof Error)
+            );
+          },
+        }),
+        retryLink({
+          retry: ({ op, error }) => {
+            if (op.type !== "subscription") return false;
+
+            const code = error.data?.code;
+            return code === undefined || transientSubscriptionErrors.has(code);
+          },
+          retryDelayMs: (attempt) => Math.min(250 * 2 ** (attempt - 1), 2_000),
         }),
         splitLink({
           condition: (operation) => operation.type === "subscription",

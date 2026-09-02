@@ -2,12 +2,15 @@
 
 import {
   ArrowRight,
+  Bot,
+  Eye,
   History,
   Link2,
   Play,
   Radio,
   RotateCcw,
   Share2,
+  Trophy,
   Users,
   Zap,
 } from "lucide-react";
@@ -18,13 +21,20 @@ import { toast } from "sonner";
 
 import { Brand } from "~/components/brand";
 import { GameBoard } from "~/components/game-board";
+import { GamePieceToken } from "~/components/game-piece-token";
 import { RulesDialog } from "~/components/rules-dialog";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import type { PlayerColor, PublicGame, WinReason } from "~/game/types";
+import type {
+  BotDifficulty,
+  Coordinate,
+  PlayerColor,
+  PublicGame,
+  WinReason,
+} from "~/game/types";
 import {
   analyticsErrorCode,
   captureAnalyticsEvent,
@@ -47,12 +57,15 @@ import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
 const winCopy: Record<WinReason, string> = {
-  center: "seized all four central spaces",
-  bosses: "captured every opposing boss",
-  pieces: "reduced the opposition to two pieces",
+  center: "Claimed all four center spaces",
+  bosses: "Captured every opposing boss",
+  pieces: "Reduced the opposition to two pieces",
 };
 
 const FIRST_WIN_SHARE_MATCH_KEY = "seze:first-win-share-match:v1";
+const FINAL_POSITION_HOLD_MS = 1_400;
+
+type FinishedPresentation = "board-hold" | "dialog" | "board-inspect";
 
 export function GameRoom({
   code,
@@ -71,7 +84,13 @@ export function GameRoom({
     string | null
   >(null);
   const [firstWinSharePending, setFirstWinSharePending] = useState(false);
+  const [finishedPresentation, setFinishedPresentation] =
+    useState<FinishedPresentation>("board-hold");
   const soundedMove = useRef<SoundedMove>(null);
+  const observedGameStatus = useRef<{
+    code: string;
+    status: PublicGame["status"];
+  } | null>(null);
   const utils = api.useUtils();
 
   useEffect(() => {
@@ -93,6 +112,43 @@ export function GameRoom({
   });
 
   const moveNumber = gameQuery.data?.state.moveNumber;
+  const capturedOnLastMove =
+    gameQuery.data?.state.lastMove?.capturedPieceIds.length ?? 0;
+  const currentStatus = gameQuery.data?.status;
+
+  useEffect(() => {
+    if (!currentStatus) return;
+
+    const previous = observedGameStatus.current;
+    const isFirstObservation = previous?.code !== normalizedCode;
+    const becameFinished =
+      !isFirstObservation &&
+      previous.status !== "finished" &&
+      currentStatus === "finished";
+
+    observedGameStatus.current = {
+      code: normalizedCode,
+      status: currentStatus,
+    };
+
+    if (currentStatus !== "finished") {
+      setFinishedPresentation("board-hold");
+      return;
+    }
+
+    if (!becameFinished) {
+      setFinishedPresentation("dialog");
+      return;
+    }
+
+    setFinishedPresentation("board-hold");
+    const timer = window.setTimeout(
+      () => setFinishedPresentation("dialog"),
+      FINAL_POSITION_HOLD_MS,
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [currentStatus, normalizedCode]);
 
   useEffect(() => {
     const game = gameQuery.data;
@@ -139,8 +195,8 @@ export function GameRoom({
       moveNumber,
     );
     soundedMove.current = result.next;
-    if (result.shouldPlay) void playMoveSound();
-  }, [moveNumber, normalizedCode]);
+    if (result.shouldPlay) void playMoveSound(capturedOnLastMove);
+  }, [capturedOnLastMove, moveNumber, normalizedCode]);
 
   useEffect(() => {
     window.addEventListener("pointerdown", primeGameAudio, { once: true });
@@ -225,6 +281,30 @@ export function GameRoom({
     },
   });
 
+  const botMove = api.game.botMove.useMutation({
+    onSuccess: (updatedGame) => {
+      utils.game.get.setData(queryInput, updatedGame);
+      if (updatedGame.status === "finished" && updatedGame.state.winReason) {
+        captureAnalyticsEventOnce(
+          "game completed",
+          updatedGame.analyticsMatchId,
+          {
+            match_id: updatedGame.analyticsMatchId,
+            move_count: updatedGame.state.moveNumber,
+            player_color: updatedGame.state.winner ?? updatedGame.state.turn,
+            ruleset_version: updatedGame.state.rulesetVersion,
+            win_reason: updatedGame.state.winReason,
+          },
+        );
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      void gameQuery.refetch();
+    },
+  });
+  const requestBotMove = botMove.mutate;
+
   const createAnother = api.game.create.useMutation({
     onSuccess: ({ game: newGame, token: newToken }, variables) => {
       captureAnalyticsEvent("table created", {
@@ -274,6 +354,28 @@ export function GameRoom({
     },
   });
 
+  const botTurnVersion =
+    gameQuery.data?.status === "active" &&
+    gameQuery.data.players.some(
+      (player) =>
+        player.kind === "bot" && player.color === gameQuery.data?.state.turn,
+    )
+      ? gameQuery.data.version
+      : null;
+
+  useEffect(() => {
+    if (botTurnVersion === null || !token) return;
+    const timer = window.setTimeout(() => {
+      requestBotMove({
+        code: normalizedCode,
+        token,
+        expectedVersion: botTurnVersion,
+      });
+    }, 520);
+
+    return () => window.clearTimeout(timer);
+  }, [botTurnVersion, normalizedCode, requestBotMove, token]);
+
   if (!tokenLoaded || gameQuery.isLoading) return <GameLoading />;
 
   if (gameQuery.error || !gameQuery.data) {
@@ -306,6 +408,8 @@ export function GameRoom({
     ? game.players.find((player) => player.color === game.viewerColor)
         ?.displayName
     : undefined;
+  const occupiedColor = game.players[0]?.color;
+  const openColor = occupiedColor ? otherColor(occupiedColor) : "ivory";
 
   function submitJoin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -413,14 +517,15 @@ export function GameRoom({
         setName={setJoinName}
         pending={join.isPending}
         error={join.error?.message}
+        color={openColor}
         onSubmit={submitJoin}
       />
     );
   }
 
   return (
-    <main className="min-h-screen px-3 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
-      <header className="mx-auto flex max-w-7xl items-center justify-between py-4 sm:py-5">
+    <main className="flex h-svh flex-col overflow-hidden px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4 lg:px-8">
+      <header className="mx-auto flex w-full max-w-7xl shrink-0 items-center justify-between py-3 sm:py-4">
         <Brand />
         <div className="flex items-center gap-2">
           {game.state.moveNumber > 0 ? (
@@ -439,9 +544,9 @@ export function GameRoom({
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_290px] lg:items-center lg:gap-8">
-        <section className="-mx-2 flex min-h-0 items-start justify-center py-2 sm:mx-0 sm:px-8 sm:py-4 lg:min-h-[calc(100vh-6rem)] lg:items-center lg:py-6">
-          <div className="relative flex w-[min(100%,calc(100svh-15rem))] max-w-[720px] flex-col">
+      <div className="mx-auto grid min-h-0 w-full max-w-7xl flex-1 grid-rows-[minmax(0,1fr)_auto] gap-4 lg:grid-cols-[minmax(0,1fr)_290px] lg:grid-rows-1 lg:items-center lg:gap-8">
+        <section className="-mx-2 flex min-h-0 items-center justify-center py-1 [container-type:size] sm:mx-0 sm:px-8 lg:h-full lg:py-2">
+          <div className="relative flex w-[min(100cqw,calc(100cqh-8rem))] max-w-[720px] flex-col">
             <BoardPlayerBar
               game={game}
               color={otherColor(game.viewerColor ?? "ivory")}
@@ -450,7 +555,9 @@ export function GameRoom({
             <GameBoard
               state={game.state}
               viewerColor={game.viewerColor}
-              disabled={game.status !== "active" || move.isPending}
+              disabled={
+                game.status !== "active" || move.isPending || botMove.isPending
+              }
               onMove={makeGameMove}
             />
             <BoardPlayerBar
@@ -458,8 +565,37 @@ export function GameRoom({
               color={game.viewerColor ?? "ivory"}
               placement="bottom"
             />
-            {game.status === "finished" ? (
-              <div className="absolute -inset-2 z-30 grid place-items-center rounded-[2rem] bg-black/48 p-4 backdrop-blur-[2px] sm:-inset-4">
+            {botTurnVersion !== null && botMove.isError && token ? (
+              <Button
+                className="absolute right-3 bottom-[4.75rem] z-30"
+                onClick={() =>
+                  requestBotMove({
+                    code: normalizedCode,
+                    token,
+                    expectedVersion: botTurnVersion,
+                  })
+                }
+              >
+                Retry computer move
+              </Button>
+            ) : null}
+            {game.status === "finished" &&
+            finishedPresentation === "board-inspect" ? (
+              <div className="absolute right-3 bottom-[4.75rem] z-30">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFinishedPresentation("dialog")}
+                  className="border-[#d6b46c]/40 bg-[#160a0c] text-[#f1d59b] shadow-[0_8px_24px_rgba(0,0,0,0.48)] hover:bg-[#2a1718] hover:text-[#ffe7b4]"
+                >
+                  <Trophy className="size-4" />
+                  Show result
+                </Button>
+              </div>
+            ) : null}
+            {game.status === "finished" && finishedPresentation === "dialog" ? (
+              <div className="fixed inset-0 z-40 grid place-items-center bg-black/48 p-4 backdrop-blur-[2px]">
                 <FinishedGameActions
                   game={game}
                   viewerName={viewerName}
@@ -473,13 +609,21 @@ export function GameRoom({
                   onNewTable={startAnotherGame}
                   onRematch={requestGameRematch}
                   onShareFirstWin={shareFirstWin}
+                  onViewFinalPosition={() =>
+                    setFinishedPresentation("board-inspect")
+                  }
                 />
               </div>
             ) : null}
           </div>
         </section>
 
-        <aside className="space-y-4 lg:sticky lg:top-6">
+        <aside
+          className={cn(
+            "min-h-0 space-y-4 lg:sticky lg:top-4",
+            game.status !== "waiting" && game.viewerColor && "hidden lg:block",
+          )}
+        >
           {game.status === "active" ? (
             <div className="hidden lg:block">
               <GameStatus game={game} />
@@ -493,7 +637,8 @@ export function GameRoom({
                   Waiting for an opponent
                 </CardTitle>
                 <p className="text-sm leading-6 text-[#b9a78e]">
-                  Share this table. The game starts as soon as Gold joins.
+                  Share this table. The game starts as soon as a{" "}
+                  {colorName(openColor)} player joins.
                 </p>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -556,6 +701,7 @@ function FinishedGameActions({
   onNewTable,
   onRematch,
   onShareFirstWin,
+  onViewFinalPosition,
 }: {
   game: PublicGame;
   viewerName?: string;
@@ -566,6 +712,7 @@ function FinishedGameActions({
   onNewTable: () => void;
   onRematch: () => void;
   onShareFirstWin: () => void;
+  onViewFinalPosition: () => void;
 }) {
   const rematchRequester = game.rematch
     ? game.players.find((player) => player.color === game.rematch?.requestedBy)
@@ -576,35 +723,91 @@ function FinishedGameActions({
   const winnerName = game.players.find(
     (player) => player.color === game.state.winner,
   )?.displayName;
+  const viewerWon = game.viewerColor === game.state.winner;
+  const resultLabel = viewerName
+    ? viewerWon
+      ? "Victory"
+      : "Defeat"
+    : "Match complete";
+  const finalMove = game.state.lastMove;
+  const winnerColor = game.state.winner;
+  const resultCopy = game.state.winReason
+    ? `${winCopy[game.state.winReason]}.`
+    : "The match is complete.";
+  const rematchCopy = opponentRequested
+    ? `${rematchRequester ?? "Opponent"} is ready for another game.`
+    : viewerRequested
+      ? "Your rematch request is waiting."
+      : null;
 
   return (
     <Card
       role="dialog"
       aria-label="Game result"
-      className="w-full max-w-sm border-[#d9b86d]/35 bg-[linear-gradient(145deg,rgba(91,15,33,0.98),rgba(20,9,11,0.99))] text-[#f2e5cd] shadow-[0_28px_90px_rgba(0,0,0,0.62)]"
+      className="max-h-[calc(100svh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain border-[#d9b86d]/35 bg-[linear-gradient(155deg,rgba(48,18,23,0.99),rgba(17,12,13,0.995)_58%)] text-[#f2e5cd] shadow-[0_28px_90px_rgba(0,0,0,0.68)]"
     >
-      <CardHeader className="pb-4 text-center">
-        <p className="text-[0.68rem] uppercase tracking-[0.2em] text-[#d0b276]">
-          Game over
-        </p>
-        <CardTitle className="font-serif text-3xl">
-          {winnerName ?? "Winner"} wins
-        </CardTitle>
-        <p className="text-sm leading-6 text-[#baa98f]">
-          {opponentRequested
-            ? `${rematchRequester ?? "Opponent"} requested a rematch.`
-            : viewerRequested
-              ? "Waiting for your opponent."
-              : game.state.winReason
-                ? `${winCopy[game.state.winReason]}.`
-                : "Play again or review the game."}
-        </p>
-        <p className="text-xs tabular-nums text-[#d0b276]">
-          Final score · Red {game.state.scores.burgundy} · Gold{" "}
-          {game.state.scores.ivory}
-        </p>
+      <CardHeader className="justify-items-center px-5 pt-6 pb-4 text-center">
+        <div
+          className={cn(
+            "grid size-14 place-items-center rounded-full border border-[#e0c47e]/45 bg-black/25 shadow-[0_10px_30px_rgba(0,0,0,0.34),inset_0_1px_rgba(255,255,255,0.12)]",
+            winnerColor === "ivory" ? "text-[#4a3410]" : "text-[#f1d08e]",
+          )}
+        >
+          <GamePieceToken
+            color={winnerColor ?? "ivory"}
+            kind="boss"
+            className="size-10"
+          />
+        </div>
+        <div className="mt-1 space-y-1.5">
+          <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-[#d0b276]">
+            {resultLabel}
+          </p>
+          <CardTitle className="font-serif text-[2rem] leading-none text-[#fff0d5]">
+            {viewerWon ? "You won" : `${winnerName ?? "Winner"} wins`}
+          </CardTitle>
+          <p className="text-sm leading-5 text-[#c8b89f]">{resultCopy}</p>
+        </div>
+
+        <div className="mt-3 grid w-full grid-cols-[1fr_auto_1fr] items-stretch overflow-hidden rounded-xl border border-[#d7b96f]/18 bg-black/20">
+          <ResultScore
+            color="burgundy"
+            score={game.state.scores.burgundy}
+            pieces={
+              game.state.pieces.filter((piece) => piece.color === "burgundy")
+                .length
+            }
+            winner={winnerColor === "burgundy"}
+          />
+          <div className="my-2 w-px bg-[#d7b96f]/15" />
+          <ResultScore
+            color="ivory"
+            score={game.state.scores.ivory}
+            pieces={
+              game.state.pieces.filter((piece) => piece.color === "ivory")
+                .length
+            }
+            winner={winnerColor === "ivory"}
+          />
+        </div>
+
+        {finalMove ? (
+          <div className="mt-1 flex items-center gap-2 text-[0.68rem] font-medium uppercase tracking-[0.1em] text-[#a8977d]">
+            <span>Final move</span>
+            <span className="font-mono text-xs tracking-normal text-[#e6cf9e]">
+              {squareName(finalMove.from)}
+            </span>
+            <ArrowRight className="size-3 text-[#967f51]" />
+            <span className="font-mono text-xs tracking-normal text-[#e6cf9e]">
+              {squareName(finalMove.to)}
+            </span>
+          </div>
+        ) : null}
+        {rematchCopy ? (
+          <p className="mt-1 text-xs text-[#d9c49b]">{rematchCopy}</p>
+        ) : null}
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2.5 border-t border-[#d7b96f]/12 bg-black/10 px-5 pt-4 pb-5">
         {viewerName ? (
           <Button
             type="button"
@@ -648,6 +851,15 @@ function FinishedGameActions({
             </div>
           </div>
         ) : null}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onViewFinalPosition}
+          className="h-10 w-full border-[#d6b46c]/20 bg-white/[0.025] text-[#e2cca1] hover:bg-white/[0.07] hover:text-[#fff0d1]"
+        >
+          <Eye className="size-4" />
+          View final position
+        </Button>
         <div className="grid grid-cols-2 gap-3">
           <Button
             type="button"
@@ -679,8 +891,59 @@ function FinishedGameActions({
   );
 }
 
+function ResultScore({
+  color,
+  score,
+  pieces,
+  winner,
+}: {
+  color: PlayerColor;
+  score: number;
+  pieces: number;
+  winner: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "px-2 py-2.5 text-center sm:px-3",
+        winner && "bg-[#d8b86f]/8",
+      )}
+    >
+      <div className="flex items-center justify-center gap-1.5">
+        <span
+          aria-hidden="true"
+          className={cn(
+            "size-2 rounded-full border border-[#d4af5f]",
+            color === "ivory"
+              ? "bg-[var(--game-piece-yellow)]"
+              : "bg-[var(--game-piece-burgundy)]",
+          )}
+        />
+        <span className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[#b6a58a]">
+          {colorName(color)}
+        </span>
+        {winner ? (
+          <span className="text-[0.52rem] font-bold uppercase tracking-[0.1em] text-[#dfc177]">
+            Winner
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-0.5 font-serif text-2xl leading-none tabular-nums text-[#f5dfb1]">
+        {score}
+      </p>
+      <p className="mt-1 text-[0.62rem] text-[#958772]">
+        {pieces} {pieces === 1 ? "piece" : "pieces"} left
+      </p>
+    </div>
+  );
+}
+
 function colorName(color: PlayerColor) {
   return color === "ivory" ? "Gold" : "Red";
+}
+
+function squareName({ row, col }: Coordinate) {
+  return `${String.fromCharCode(65 + col)}${8 - row}`;
 }
 
 function otherColor(color: PlayerColor): PlayerColor {
@@ -704,12 +967,15 @@ function BoardPlayerBar({
   const viewer = game.viewerColor === color;
   const active = game.status === "active" && game.state.turn === color;
   const winner = game.state.winner === color;
+  const computer = player?.kind === "bot";
   const stateLabel = winner
     ? "Winner"
     : active
       ? viewer
         ? "Your move"
-        : "To move"
+        : computer
+          ? "Thinking…"
+          : "To move"
       : null;
 
   return (
@@ -717,59 +983,108 @@ function BoardPlayerBar({
       role={active ? "status" : undefined}
       aria-live={active ? "polite" : undefined}
       className={cn(
-        "relative z-0 mx-3 flex min-h-14 items-center gap-3 border px-3 transition-colors",
+        "relative z-0 mx-2 grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden border px-3.5 transition-[border-color,background-color] duration-200",
         placement === "top"
-          ? "-mb-3 rounded-t-xl rounded-b-none pt-2 pb-5"
-          : "-mt-3 rounded-t-none rounded-b-xl pt-5 pb-2",
+          ? "-mb-3 rounded-t-2xl rounded-b-none pt-2.5 pb-5"
+          : "-mt-3 rounded-t-none rounded-b-2xl pt-5 pb-2.5",
         active
-          ? "border-[#6f9692] bg-[#1d1a1c] text-[#f2e8da]"
+          ? "border-[#71938f]/90 bg-[linear-gradient(90deg,rgba(83,120,116,0.18),rgba(24,20,22,0.98)_44%)] text-[#f2e8da]"
           : winner
-            ? "border-[#d8b86f]/60 bg-[#d8b86f]/14 text-[#f2e5cd]"
-            : "border-[#5d454b] bg-[#171315] text-[#ddccb0]",
+            ? "border-[#d8b86f]/65 bg-[linear-gradient(90deg,rgba(216,184,111,0.16),rgba(24,18,19,0.98)_44%)] text-[#f2e5cd]"
+            : "border-[#5b454a] bg-[#181416] text-[#ddccb0]",
       )}
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "size-8 shrink-0 rounded-full border-2 border-[var(--game-gold)] shadow-[0_1px_2px_rgba(0,0,0,0.35)]",
-          color === "ivory"
-            ? "bg-[var(--game-piece-yellow)]"
-            : "bg-[var(--game-piece-burgundy)]",
-        )}
-      />
+      <div className="grid size-10 shrink-0 place-items-center rounded-full border border-[#d5b46a]/35 bg-black/25 shadow-[inset_0_1px_rgba(255,255,255,0.06)]">
+        <GamePieceToken color={color} kind="guard" className="size-7" />
+      </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate font-semibold">
-            {player?.displayName ?? "Waiting…"}
+        <p className="truncate text-sm font-semibold leading-tight text-[#f0e3ce] sm:text-base">
+          {player?.displayName ?? "Waiting for player"}
+        </p>
+        <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.14em] text-[#9e907d]">
+          <span
+            className={cn(
+              color === "ivory" ? "text-[#d6bd7b]" : "text-[#c78492]",
+            )}
+          >
+            {colorName(color)}
           </span>
           {viewer ? (
-            <span className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] opacity-65">
-              You
-            </span>
+            <>
+              <span aria-hidden="true" className="opacity-40">
+                ·
+              </span>
+              <span>You</span>
+            </>
+          ) : null}
+          {computer ? (
+            <>
+              <span aria-hidden="true" className="opacity-40">
+                ·
+              </span>
+              <span className="flex min-w-0 items-center gap-1 truncate">
+                <Bot className="size-3 shrink-0" />
+                {game.botDifficulty
+                  ? botDifficultyName(game.botDifficulty)
+                  : "Computer"}
+              </span>
+            </>
           ) : null}
         </div>
       </div>
-      <span className="text-xs tabular-nums opacity-65">
-        {pieces}/8 · {score} pts
-      </span>
-      {stateLabel ? (
-        <span
-          className={cn(
-            "rounded-full px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em]",
-            active
-              ? "bg-[#789b97] text-[#14211f]"
-              : "bg-[#d8b86f] text-[#2e1214]",
-          )}
-        >
-          {stateLabel}
-        </span>
-      ) : null}
+      <div className="flex min-w-[4.8rem] flex-col items-end">
+        {stateLabel ? (
+          <span
+            className={cn(
+              "flex items-center gap-1.5 text-[0.58rem] font-bold uppercase tracking-[0.12em]",
+              active ? "text-[#a7c8c4]" : "text-[#dfc177]",
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className={cn(
+                "size-1.5 rounded-full",
+                active
+                  ? "bg-[#83aaa5] shadow-[0_0_0_3px_rgba(131,170,165,0.13)]"
+                  : "bg-[#d8b86f] shadow-[0_0_0_3px_rgba(216,184,111,0.12)]",
+              )}
+            />
+            {stateLabel}
+          </span>
+        ) : (
+          <span className="text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-[#776c5e]">
+            {game.status === "finished"
+              ? "Finished"
+              : game.status === "waiting"
+                ? player
+                  ? "Ready"
+                  : "Open seat"
+                : "Waiting"}
+          </span>
+        )}
+        <p className="mt-1.5 text-xs tabular-nums text-[#a99a83]">
+          <span className="font-semibold text-[#e2d1b4]">{score}</span> pts
+          <span aria-hidden="true" className="mx-1.5 opacity-35">
+            ·
+          </span>
+          <span className="font-semibold text-[#e2d1b4]">{pieces}</span> left
+        </p>
+      </div>
     </div>
   );
 }
 
+function botDifficultyName(difficulty: BotDifficulty) {
+  if (difficulty === "easy") return "Easy";
+  if (difficulty === "hard") return "Hard";
+  return "Balanced";
+}
+
 function GameStatus({ game }: { game: PublicGame }) {
   const isViewerTurn = game.viewerColor === game.state.turn;
+  const isBotTurn = game.players.some(
+    (player) => player.kind === "bot" && player.color === game.state.turn,
+  );
 
   return (
     <Card className="border-[#d9b86d]/20 bg-[#1a0c0e]/88 text-[#f2e5cd] shadow-2xl backdrop-blur">
@@ -786,7 +1101,11 @@ function GameStatus({ game }: { game: PublicGame }) {
           Turn {game.state.moveNumber + 1}
         </p>
         <CardTitle className="font-serif text-2xl">
-          {isViewerTurn ? "Your move" : "Opponent’s move"}
+          {isViewerTurn
+            ? "Your move"
+            : isBotTurn
+              ? "Computer thinking…"
+              : "Opponent’s move"}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -838,6 +1157,7 @@ function JoinTableGate({
   setName,
   pending,
   error,
+  color,
   onSubmit,
 }: {
   code: string;
@@ -847,6 +1167,7 @@ function JoinTableGate({
   setName: (name: string) => void;
   pending: boolean;
   error?: string;
+  color: PlayerColor;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   const resolvedName = resolveDisplayName(name, suggestedName);
@@ -885,7 +1206,7 @@ function JoinTableGate({
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
-              <ViewerColorCallout color="ivory" />
+              <ViewerColorCallout color={color} />
               <form className="space-y-4" onSubmit={onSubmit}>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-3">

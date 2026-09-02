@@ -36,6 +36,13 @@
       "when": 1788281274876,
       "tag": "0004_reset_matches_for_ruleset_0_3",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788359969635,
+      "tag": "0005_long_earthquake",
+      "breakpoints": true
     }
   ]
 }

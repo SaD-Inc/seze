@@ -6,10 +6,12 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { gameEvents } from "~/server/game/events";
 import {
+  createBotGame,
   createGame,
   getGameHistory,
   getPublicGame,
   joinGame,
+  makeBotMove,
   makeMove,
   requestRematch,
 } from "~/server/game/service";
@@ -22,11 +24,18 @@ const code = z
   .max(8)
   .transform((value) => value.toUpperCase());
 const token = z.string().min(24).max(64);
+const botDifficulty = z.enum(["easy", "balanced", "hard"]);
 
 export const gameRouter = createTRPCRouter({
   create: publicProcedure
     .input(z.object({ displayName }))
     .mutation(({ ctx, input }) => createGame(ctx.db, input.displayName)),
+
+  createBot: publicProcedure
+    .input(z.object({ displayName, difficulty: botDifficulty }))
+    .mutation(({ ctx, input }) =>
+      createBotGame(ctx.db, input.displayName, input.difficulty),
+    ),
 
   join: publicProcedure
     .input(z.object({ code, displayName }))
@@ -55,6 +64,16 @@ export const gameRouter = createTRPCRouter({
       }),
     )
     .mutation(({ ctx, input }) => makeMove(ctx.db, input)),
+
+  botMove: publicProcedure
+    .input(
+      z.object({
+        code,
+        token,
+        expectedVersion: z.number().int().nonnegative(),
+      }),
+    )
+    .mutation(({ ctx, input }) => makeBotMove(ctx.db, input)),
 
   rematch: publicProcedure
     .input(z.object({ code, token }))

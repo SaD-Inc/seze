@@ -1,10 +1,12 @@
 import { index, pgTableCreator, uniqueIndex } from "drizzle-orm/pg-core";
 
 import type {
+  BotDifficulty,
   Coordinate,
   GameState,
   GameStatus,
   PlayerColor,
+  PlayerKind,
 } from "~/game/types";
 
 export const createTable = pgTableCreator((name) => `seze_${name}`);
@@ -16,6 +18,7 @@ export const games = createTable(
     code: d.varchar({ length: 8 }).notNull(),
     analyticsMatchId: d.uuid().defaultRandom().notNull(),
     status: d.varchar({ length: 16 }).$type<GameStatus>().notNull(),
+    botDifficulty: d.varchar({ length: 16 }).$type<BotDifficulty>(),
     rulesetVersion: d.varchar({ length: 32 }).notNull(),
     version: d.integer().default(0).notNull(),
     state: d.jsonb().$type<GameState>().notNull(),
@@ -41,8 +44,13 @@ export const gamePlayers = createTable(
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
     color: d.varchar({ length: 16 }).$type<PlayerColor>().notNull(),
+    kind: d
+      .varchar({ length: 16 })
+      .$type<PlayerKind>()
+      .default("human")
+      .notNull(),
     displayName: d.varchar({ length: 24 }).notNull(),
-    tokenHash: d.varchar({ length: 64 }).notNull(),
+    tokenHash: d.varchar({ length: 64 }),
     joinedAt: d.timestamp({ withTimezone: true }).defaultNow().notNull(),
   }),
   (table) => [

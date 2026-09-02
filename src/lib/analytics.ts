@@ -1,6 +1,11 @@
 import type { CaptureResult, PostHog, Properties } from "posthog-js";
 
-import type { PlayerColor, RulesetVersion, WinReason } from "~/game/types";
+import type {
+  BotDifficulty,
+  PlayerColor,
+  RulesetVersion,
+  WinReason,
+} from "~/game/types";
 
 type EntryPoint = "game_over" | "home";
 type JoinMethod = "manual_code" | "quick_link";
@@ -31,6 +36,16 @@ type AnalyticsEvents = {
   };
   "table create failed": {
     entry_point: EntryPoint;
+    error_code: AnalyticsErrorCode;
+  };
+  "bot game create intent": { difficulty: BotDifficulty };
+  "bot game created": {
+    difficulty: BotDifficulty;
+    match_id: string;
+    ruleset_version: RulesetVersion;
+  };
+  "bot game create failed": {
+    difficulty: BotDifficulty;
     error_code: AnalyticsErrorCode;
   };
   "table join intent": { join_method: JoinMethod };

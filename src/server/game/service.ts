@@ -1,10 +1,12 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 
 import { TRPCError } from "@trpc/server";
 import { and, asc, eq } from "drizzle-orm";
 
+import { chooseBotMove } from "~/game/bot";
 import { applyMove, createInitialState, InvalidMoveError } from "~/game/rules";
 import type {
+  BotDifficulty,
   Coordinate,
   GameState,
   GameStatus,
@@ -30,6 +32,10 @@ function gameCode(): string {
 
 function playerToken(): string {
   return randomBytes(24).toString("base64url");
+}
+
+function randomPlayerColor(): PlayerColor {
+  return randomInt(2) === 0 ? "burgundy" : "ivory";
 }
 
 function tokenHash(token: string): string {
@@ -64,6 +70,7 @@ async function publicGameFrom(
     .select({
       color: gamePlayers.color,
       displayName: gamePlayers.displayName,
+      kind: gamePlayers.kind,
       tokenHash: gamePlayers.tokenHash,
     })
     .from(gamePlayers)
@@ -87,8 +94,13 @@ async function publicGameFrom(
     status: game.status,
     version: game.version,
     state: game.state,
-    players: players.map(({ color, displayName }) => ({ color, displayName })),
+    players: players.map(({ color, displayName, kind }) => ({
+      color,
+      displayName,
+      kind,
+    })),
     viewerColor: viewer?.color ?? null,
+    botDifficulty: game.botDifficulty,
     rematch: game.rematchRequestedBy
       ? {
           requestedBy: game.rematchRequestedBy,
@@ -152,6 +164,7 @@ export async function createGame(
   const code = gameCode();
   const token = playerToken();
   const state = createInitialState();
+  const creatorColor = randomPlayerColor();
 
   await db.transaction(async (tx) => {
     const [game] = await tx
@@ -168,10 +181,56 @@ export async function createGame(
 
     await tx.insert(gamePlayers).values({
       gameId: game.id,
-      color: "burgundy",
+      color: creatorColor,
       displayName: normalizeName(displayName),
       tokenHash: tokenHash(token),
     });
+  });
+
+  return { game: await publicGameFrom(db, code, token), token };
+}
+
+export async function createBotGame(
+  db: Database,
+  displayName: string,
+  difficulty: BotDifficulty,
+): Promise<{ game: PublicGame; token: string }> {
+  const code = gameCode();
+  const token = playerToken();
+  const state = createInitialState();
+  const humanColor = randomPlayerColor();
+  const botColor = otherColor(humanColor);
+
+  await db.transaction(async (tx) => {
+    const [game] = await tx
+      .insert(games)
+      .values({
+        code,
+        status: "active",
+        botDifficulty: difficulty,
+        rulesetVersion: state.rulesetVersion,
+        state,
+      })
+      .returning({ id: games.id });
+
+    if (!game) throw new Error("Bot game creation did not return an id.");
+
+    await tx.insert(gamePlayers).values([
+      {
+        gameId: game.id,
+        color: humanColor,
+        kind: "human",
+        displayName: normalizeName(displayName),
+        tokenHash: tokenHash(token),
+      },
+      {
+        gameId: game.id,
+        color: botColor,
+        kind: "bot",
+        displayName: "SE!ZE Bot",
+        tokenHash: null,
+      },
+    ]);
   });
 
   return { game: await publicGameFrom(db, code, token), token };
@@ -203,9 +262,22 @@ export async function joinGame(
       });
     }
 
+    const [existingPlayer] = await tx
+      .select({ color: gamePlayers.color })
+      .from(gamePlayers)
+      .where(eq(gamePlayers.gameId, game.id))
+      .limit(1);
+
+    if (!existingPlayer) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "This table does not have a host.",
+      });
+    }
+
     await tx.insert(gamePlayers).values({
       gameId: game.id,
-      color: "ivory",
+      color: otherColor(existingPlayer.color),
       displayName: normalizeName(displayName),
       tokenHash: tokenHash(token),
     });
@@ -321,6 +393,121 @@ export async function makeMove(
   return result;
 }
 
+export async function makeBotMove(
+  db: Database,
+  input: {
+    code: string;
+    token: string;
+    expectedVersion: number;
+  },
+): Promise<PublicGame> {
+  const code = normalizeCode(input.code);
+
+  const result = await db.transaction(async (tx) => {
+    const [game] = await tx
+      .select()
+      .from(games)
+      .where(eq(games.code, code))
+      .for("update")
+      .limit(1);
+
+    if (!game) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
+    }
+    if (game.status !== "active") {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "The game is not active.",
+      });
+    }
+    if (!game.botDifficulty) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "This table does not have a computer player.",
+      });
+    }
+    if (game.version !== input.expectedVersion) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "The board changed before the computer could move.",
+      });
+    }
+
+    const players = await tx
+      .select()
+      .from(gamePlayers)
+      .where(eq(gamePlayers.gameId, game.id));
+    const callerHash = tokenHash(input.token);
+    const caller = players.find(
+      (candidate) =>
+        candidate.kind === "human" && candidate.tokenHash === callerHash,
+    );
+    const bot = players.find(
+      (candidate) =>
+        candidate.kind === "bot" && candidate.color === game.state.turn,
+    );
+
+    if (!caller) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Player token is invalid.",
+      });
+    }
+    if (!bot) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "It is not the computer's turn.",
+      });
+    }
+
+    const selectedMove = chooseBotMove(game.state, {
+      difficulty: game.botDifficulty,
+    });
+    const nextState = applyMove(
+      game.state,
+      selectedMove.pieceId,
+      selectedMove.to,
+    );
+    const nextStatus: GameStatus = nextState.winner ? "finished" : "active";
+    const [updated] = await tx
+      .update(games)
+      .set({
+        state: nextState,
+        status: nextStatus,
+        version: game.version + 1,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(games.id, game.id), eq(games.version, game.version)))
+      .returning({ id: games.id });
+
+    if (!updated) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "The board changed before the computer could move.",
+      });
+    }
+
+    const lastMove = nextState.lastMove;
+    if (!lastMove) {
+      throw new Error("Applied bot move did not produce a move record.");
+    }
+    await tx.insert(gameMoves).values({
+      gameId: game.id,
+      moveNumber: nextState.moveNumber,
+      playerColor: bot.color,
+      pieceId: selectedMove.pieceId,
+      from: lastMove.from,
+      to: lastMove.to,
+      capturedCount: lastMove.capturedPieceIds.length,
+    });
+
+    return publicGameFrom(tx, code, input.token);
+  });
+
+  emitGameChanged(code);
+  return result;
+}
+
 export async function requestRematch(
   db: Database,
   input: { code: string; token: string },
@@ -370,6 +557,52 @@ export async function requestRematch(
       return publicGameFrom(tx, code, input.token);
     }
 
+    const botPlayer = players.find((candidate) => candidate.kind === "bot");
+    if (botPlayer) {
+      const nextState = createInitialState();
+      const humanColor = randomPlayerColor();
+      createdCode = gameCode();
+      const [nextGame] = await tx
+        .insert(games)
+        .values({
+          code: createdCode,
+          status: "active",
+          botDifficulty: game.botDifficulty ?? "balanced",
+          rulesetVersion: nextState.rulesetVersion,
+          state: nextState,
+        })
+        .returning({ id: games.id });
+
+      if (!nextGame) {
+        throw new Error("Bot rematch creation did not return an id.");
+      }
+
+      await tx.insert(gamePlayers).values(
+        players.map((existingPlayer) => ({
+          gameId: nextGame.id,
+          color:
+            existingPlayer.kind === "human"
+              ? humanColor
+              : otherColor(humanColor),
+          kind: existingPlayer.kind,
+          displayName: existingPlayer.displayName,
+          tokenHash: existingPlayer.tokenHash,
+        })),
+      );
+
+      await tx
+        .update(games)
+        .set({
+          rematchRequestedBy: player.color,
+          rematchCode: createdCode,
+          version: game.version + 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(games.id, game.id));
+
+      return publicGameFrom(tx, code, input.token);
+    }
+
     if (!game.rematchRequestedBy) {
       await tx
         .update(games)
@@ -384,6 +617,11 @@ export async function requestRematch(
     }
 
     const nextState = createInitialState();
+    const firstPlayer = players[0];
+    if (!firstPlayer) {
+      throw new Error("Rematch creation requires an existing player.");
+    }
+    const firstPlayerColor = randomPlayerColor();
     createdCode = gameCode();
     const [nextGame] = await tx
       .insert(games)
@@ -400,7 +638,11 @@ export async function requestRematch(
     await tx.insert(gamePlayers).values(
       players.map((existingPlayer) => ({
         gameId: nextGame.id,
-        color: otherColor(existingPlayer.color),
+        color:
+          existingPlayer.id === firstPlayer.id
+            ? firstPlayerColor
+            : otherColor(firstPlayerColor),
+        kind: existingPlayer.kind,
         displayName: existingPlayer.displayName,
         tokenHash: existingPlayer.tokenHash,
       })),

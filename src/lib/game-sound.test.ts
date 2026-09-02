@@ -1,8 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
-import { advanceSoundedMove } from "~/lib/game-sound";
+import { advanceSoundedMove, gameSoundForMove } from "~/lib/game-sound";
 
 describe("move sound state", () => {
+  test("uses a distinct impact for captures", () => {
+    expect(gameSoundForMove(0)).toBe("move");
+    expect(gameSoundForMove(1)).toBe("capture");
+    expect(gameSoundForMove(3)).toBe("capture");
+  });
+
   test("stays silent when a game first loads", () => {
     expect(advanceSoundedMove(null, "ABC123", 4)).toEqual({
       next: { code: "ABC123", moveNumber: 4 },

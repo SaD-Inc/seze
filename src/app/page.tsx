@@ -89,15 +89,16 @@ export default function Home() {
                   SE<span className="text-[#c5304c]">!</span>ZE
                 </h1>
                 <p className="mx-auto mt-5 max-w-xl text-balance text-base leading-7 text-[#c7b59e] sm:text-lg">
-                  Play the free two-player strategy game online with a friend.
-                  No account required.
+                  Play the free two-player strategy game online with a friend or
+                  against the computer. No account required.
                 </p>
                 <div className="mt-7 w-full">
                   <Lobby />
                 </div>
                 <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-3 text-sm text-[#a99a85] sm:mt-8 sm:gap-x-6">
                   <span className="flex items-center gap-2">
-                    <Users className="size-4 text-[#d2ae63]" /> 2 players
+                    <Users className="size-4 text-[#d2ae63]" /> Friend or
+                    computer
                   </span>
                   <span className="flex items-center gap-2">
                     <Clock3 className="size-4 text-[#d2ae63]" /> 10–30 minutes

@@ -17,7 +17,7 @@ const client = createTRPCClient<AppRouter>({
 });
 
 const created = await client.game.create.mutate({
-  displayName: "Release Ivory",
+  displayName: "Release Host",
 });
 const quickJoinResponse = await fetch(
   `${baseUrl}/join/${encodeURIComponent(created.game.code)}`,
@@ -30,11 +30,14 @@ if (!quickJoinResponse.ok) {
 
 const joined = await client.game.join.mutate({
   code: created.game.code,
-  displayName: "Release Burgundy",
+  displayName: "Release Guest",
 });
 
 if (joined.game.status !== "active" || joined.game.players.length !== 2) {
   throw new Error("The second guest did not activate the table.");
+}
+if (created.game.viewerColor === joined.game.viewerColor) {
+  throw new Error("The two guests were assigned the same side.");
 }
 if (joined.game.analyticsMatchId !== created.game.analyticsMatchId) {
   throw new Error("The analytics match identifier changed between guests.");
@@ -77,7 +80,8 @@ if (!destination) throw new Error("The opening piece had no legal move.");
 
 const moved = await client.game.move.mutate({
   code: created.game.code,
-  token: created.token,
+  token:
+    initial.viewerColor === initial.state.turn ? created.token : joined.token,
   pieceId: piece.id,
   to: destination,
 });
