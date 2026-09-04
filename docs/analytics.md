@@ -1,11 +1,13 @@
 # Product analytics
 
-SEZE sends a small, explicit set of anonymous product events to PostHog when
-the public PostHog environment variables are configured. Autocapture, automatic
-pageviews, and session replay are disabled so private table URLs and guest form
-values are not collected accidentally. Analytics initialization is also
-disabled on localhost so development and CI browser checks cannot pollute the
-live project.
+SEZE sends anonymous product events to PostHog when the public PostHog
+environment variables are configured. Automatic pageviews, page leaves, and
+interaction events are enabled so PostHog Web Analytics can calculate traffic
+and engagement metrics. Autocaptured element text and attributes are masked,
+and session replay remains disabled. URL properties are sanitized before events
+are sent so private table codes, queries, and fragments are not collected.
+Analytics initialization is also disabled on localhost so development and CI
+browser checks cannot pollute the live project.
 
 ## Cross-device match attribution
 
