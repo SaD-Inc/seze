@@ -85,8 +85,22 @@ export default function Home() {
                 >
                   Unofficial version
                 </Badge>
-                <h1 className="font-serif text-6xl leading-none tracking-[0.08em] text-[#fff0d3] drop-shadow-2xl sm:text-8xl md:text-[9rem]">
-                  SE<span className="text-[#c5304c]">!</span>ZE
+                <h1
+                  aria-label="SE!ZE"
+                  className="inline-grid grid-cols-[1fr_auto_1fr] items-baseline font-serif text-6xl leading-none tracking-[0.08em] text-[#fff0d3] drop-shadow-2xl sm:text-8xl md:text-[9rem]"
+                >
+                  <span className="text-right" aria-hidden="true">
+                    SE
+                  </span>
+                  <span
+                    className="text-[#c5304c] tracking-normal"
+                    aria-hidden="true"
+                  >
+                    !
+                  </span>
+                  <span className="text-left" aria-hidden="true">
+                    ZE
+                  </span>
                 </h1>
                 <p className="mx-auto mt-5 max-w-xl text-balance text-base leading-7 text-[#c7b59e] sm:text-lg">
                   Play the free two-player strategy game online with a friend or

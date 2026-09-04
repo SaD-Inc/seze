@@ -64,6 +64,10 @@ const winCopy: Record<WinReason, string> = {
 
 const FIRST_WIN_SHARE_MATCH_KEY = "seze:first-win-share-match:v1";
 const FINAL_POSITION_HOLD_MS = 1_400;
+const STARTING_GUARDS_PER_COLOR = 6;
+const STARTING_BOSSES_PER_COLOR = 2;
+const VISIBLE_CAPTURED_GUARDS = 2;
+const CAPTURE_ICON_SLOTS = ["first", "second"] as const;
 
 type FinishedPresentation = "board-hold" | "dialog" | "board-inspect";
 
@@ -766,6 +770,14 @@ function FinishedGameActions({
           <CardTitle className="font-serif text-[2rem] leading-none text-[#fff0d5]">
             {viewerWon ? "You won" : `${winnerName ?? "Winner"} wins`}
           </CardTitle>
+          {game.botDifficulty ? (
+            <div className="flex justify-center pt-0.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d7b96f]/20 bg-black/20 px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[#cdbb98]">
+                <Bot className="size-3" aria-hidden="true" />
+                {botDifficultyName(game.botDifficulty)} difficulty
+              </span>
+            </div>
+          ) : null}
           <p className="text-sm leading-5 text-[#c8b89f]">{resultCopy}</p>
         </div>
 
@@ -983,7 +995,7 @@ function BoardPlayerBar({
       role={active ? "status" : undefined}
       aria-live={active ? "polite" : undefined}
       className={cn(
-        "relative z-0 mx-2 grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden border px-3.5 transition-[border-color,background-color] duration-200",
+        "relative z-0 mx-2 grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2 overflow-hidden border px-3.5 transition-[border-color,background-color] duration-200 sm:gap-3",
         placement === "top"
           ? "-mb-3 rounded-t-2xl rounded-b-none pt-2.5 pb-5"
           : "-mt-3 rounded-t-none rounded-b-2xl pt-5 pb-2.5",
@@ -1032,6 +1044,7 @@ function BoardPlayerBar({
           ) : null}
         </div>
       </div>
+      <CapturedPieces game={game} capturedBy={color} />
       <div className="flex min-w-[4.8rem] flex-col items-end">
         {stateLabel ? (
           <span
@@ -1070,6 +1083,96 @@ function BoardPlayerBar({
           <span className="font-semibold text-[#e2d1b4]">{pieces}</span> left
         </p>
       </div>
+    </div>
+  );
+}
+
+function CapturedPieces({
+  game,
+  capturedBy,
+}: {
+  game: PublicGame;
+  capturedBy: PlayerColor;
+}) {
+  const capturedColor = otherColor(capturedBy);
+  let remainingGuards = 0;
+  let remainingBosses = 0;
+
+  for (const piece of game.state.pieces) {
+    if (piece.color !== capturedColor) continue;
+    if (piece.kind === "guard") remainingGuards += 1;
+    else remainingBosses += 1;
+  }
+
+  const capturedGuards = Math.max(
+    0,
+    STARTING_GUARDS_PER_COLOR - remainingGuards,
+  );
+  const capturedBosses = Math.max(
+    0,
+    STARTING_BOSSES_PER_COLOR - remainingBosses,
+  );
+
+  if (capturedGuards === 0 && capturedBosses === 0) {
+    return <span aria-hidden="true" className="w-0" />;
+  }
+
+  const stackedGuards = capturedGuards >= 3;
+  const visibleGuards = stackedGuards
+    ? VISIBLE_CAPTURED_GUARDS
+    : capturedGuards;
+  const hiddenGuards = capturedGuards - visibleGuards;
+  const capturedLabel = [
+    capturedBosses > 0
+      ? `${capturedBosses} ${colorName(capturedColor).toLowerCase()} ${capturedBosses === 1 ? "boss" : "bosses"}`
+      : null,
+    capturedGuards > 0
+      ? `${capturedGuards} ${colorName(capturedColor).toLowerCase()} ${capturedGuards === 1 ? "guard" : "guards"}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" and ");
+
+  return (
+    <div
+      role="img"
+      aria-label={`Captured ${capturedLabel}`}
+      className="flex min-w-0 items-center justify-end gap-1 text-[#b9aa91]"
+    >
+      <span aria-hidden="true" className="flex items-center gap-0.5">
+        {CAPTURE_ICON_SLOTS.slice(0, capturedBosses).map((slot) => (
+          <GamePieceToken
+            key={`boss-${slot}`}
+            color={capturedColor}
+            kind="boss"
+            className="size-[1.15rem] border"
+          />
+        ))}
+      </span>
+      <span
+        aria-hidden="true"
+        className={cn(
+          "flex items-center",
+          stackedGuards ? "-space-x-2" : "gap-0.5",
+        )}
+      >
+        {CAPTURE_ICON_SLOTS.slice(0, visibleGuards).map((slot) => (
+          <GamePieceToken
+            key={`guard-${slot}`}
+            color={capturedColor}
+            kind="guard"
+            className="size-[1.05rem] border shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+          />
+        ))}
+      </span>
+      {hiddenGuards > 0 ? (
+        <span
+          aria-hidden="true"
+          className="text-[0.65rem] font-semibold tabular-nums text-[#cbbb9f]"
+        >
+          +{hiddenGuards}
+        </span>
+      ) : null}
     </div>
   );
 }

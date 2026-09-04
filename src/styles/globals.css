@@ -169,15 +169,15 @@
 }
 
 .home-arena-piece-ivory {
-  top: 17%;
-  left: 25%;
+  top: 20%;
+  left: 20%;
   background: var(--game-piece-yellow);
   color: var(--game-piece-yellow-ink);
 }
 
 .home-arena-piece-burgundy {
-  right: 23%;
-  bottom: 18%;
+  right: 20%;
+  bottom: 20%;
   background: var(--game-piece-burgundy);
   color: var(--game-gold-bright);
 }
