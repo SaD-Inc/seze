@@ -231,7 +231,7 @@ export async function initializeAnalytics(): Promise<PostHog | null> {
         capture_pageleave: true,
         mask_all_element_attributes: true,
         mask_all_text: true,
-        disable_session_recording: true,
+        disable_session_recording: false,
         person_profiles: "identified_only",
         before_send: (event) => sanitizeAnalyticsEvent(event),
       });
